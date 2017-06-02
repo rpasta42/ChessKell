@@ -10,6 +10,7 @@ module Utils
 , movePiece
 ) where
 
+--imports
 import Types
 import qualified Data.Matrix as M
 import qualified Data.Char as C
@@ -89,12 +90,12 @@ movePiece board
        bIndex = L.elemIndex piece bPieces
 
    in if isJust wIndex
-      then let (part1, part2) = L.splitAt (extractJust wIndex) wPieces
+      then let (part1, (_:part2)) = L.splitAt (extractJust wIndex) wPieces
                newPiecesW = part1 ++ [newPiece] ++ part2
            in Right $ mkBoard newPiecesW bPieces
       else if isJust bIndex
-           then let (part1, part2) = L.splitAt (extractJust bIndex)
-                                               bPieces
+           then let (part1, (_:part2)) = L.splitAt (extractJust bIndex)
+                                                   bPieces
                     newPiecesB = part1 ++ [newPiece] ++ part2
                 in Right $ mkBoard wPieces newPiecesB
            else Left "movePiece fail: piece not found"

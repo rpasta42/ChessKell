@@ -108,10 +108,14 @@ driver =
 
 x1 = newGame
 x2 = boardToMatrix x1
-x3 = mkMove x1 ('C', 1) ('C', 3)
 
-x4 = getBoardPieceByPos x1 ('C', 1)
-x5 = x4 >>= getPieceMoves x1
+x3 = getBoardPieceByPos x1 ('C', 1)
+x4 = x3 >>= getPieceMoves x1
+
+x5 = mkMove x1 ('C', 1) ('D', 2)
+x6 = fmap boardToMatrix x5
+(Right x7) = x6
+
 --fmap (map coordToPos) x5
 
 

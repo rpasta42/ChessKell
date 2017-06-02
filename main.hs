@@ -1,7 +1,6 @@
 import Types
 import Utils
-
-import qualified Data.Char as C
+import qualified Data.List as L
 
 --cabal install matrix
 
@@ -19,23 +18,41 @@ newGame =
        wOtherPieces = mkOtherPieces White 1
        bOtherPieces = mkOtherPieces Black 8
 
-   in (wPawns++wOtherPieces, bPawns++bOtherPieces)
+   in mkBoard (wPawns++wOtherPieces) (bPawns++bOtherPieces)
+
+
+--movePiece board piece to =
 
 
 
+mkMove :: Board -> Position -> Position -> ChessRet Board
+mkMove board from to =
+   do piece <- getBoardPieceByPos board from
+      pieceMoves <- getPieceMoves board piece
+      ret <-
+         if (posToCoord to) `elem` pieceMoves
+         then movePiece board piece to
+         else Left "mkMove: not a valid move"
+      return ret
 
---mkMove :: Board -> Postion -> Position -> ChessRet Board
---mkMove board from to =
+
+
 
 --showBoard b =
 
-getPossibleMoves :: Board -> [(Position, Position)]
-getPossibleMoves _ = []
 
 
+notPutUnderCheck x = True
 
-
-getPieceMoves board = filter isMoveOnBoard $ getPieceMoves' board
+getPieceMoves :: Board -> BoardPiece -> ChessRet [Coord]
+getPieceMoves board piece =
+   let pieceMoves1 = filter isMoveOnBoard $ getPieceMoves' piece
+       pieceMoves2 = filter (\ coord -> getPieceCoord piece /= coord)
+                            pieceMoves1
+       pieceMoves3 = filter notPutUnderCheck pieceMoves2
+   in if length pieceMoves3 == 0
+      then Left "no moves"
+      else Right pieceMoves3
 
 isMoveOnBoard :: Coord -> Bool
 isMoveOnBoard (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
@@ -62,6 +79,39 @@ getPieceMoves' (BoardPiece {getPiece=piece, getColor=color, getPosition=pos}) = 
             in zip xs ys
 
 
+
+
+
+getPossibleMoves :: Board -> [(Position, Position)]
+getPossibleMoves _ = []
+
+
 ---Utils
+
+
+{-
+getPlayerMove = do
+   putStrLn "enter move:"
+   line <- getLine
+   return line
+
+loop board whosTurn =
+   move <- getPlayerMove
+
+   loop newBoard (flipColor whosTurn)
+
+
+driver =
+   board <- return newGame
+   game <- loop board White
+-}
+
+x1 = newGame
+x2 = boardToMatrix x1
+x3 = mkMove x1 ('C', 1) ('C', 3)
+
+x4 = getBoardPieceByPos x1 ('C', 1)
+x5 = x4 >>= getPieceMoves x1
+--fmap (map coordToPos) x5
 
 

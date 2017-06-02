@@ -9,6 +9,8 @@ module Types
 , Board(Board, getWhitePieces, getBlackPieces)
 ) where
 
+type Position = (Char, Int)
+type Coord = (Int, Int)
 
 type ChessRet a = Either String a
 
@@ -80,17 +82,13 @@ instance Ord OrdPiece where
 
             compare' b a = compare' a b
 
-
 data Color = White | Black
                deriving (Show, Eq)
-
-type Position = (Char, Int)
-type Coord = (Int, Int)
 
 data BoardPiece = BoardPiece { getPiece :: Piece
                              , getColor :: Color
                              , getPosition :: Position
-                             } deriving (Show)
+                             } deriving (Show, Eq)
 
 data Board = Board { getWhitePieces :: [BoardPiece]
                    , getBlackPieces :: [BoardPiece]

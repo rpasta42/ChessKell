@@ -60,11 +60,11 @@ getPieceMoves board bPiece =
    let pPiece = getPiece bPiece
        pCoord = getPieceCoord bPiece
        pieceMoves1 = filter isMoveOnBoard $ getPieceMoves' bPiece
-       pieceMoves2 = filter (not $ coordEq pCoord) pieceMoves1
-       pieceMoves3 = filter (not $ putUnderCheck board) pieceMoves2
-       pieceMoves4 = filter (not $ moveOnOwnPiece board bPiece)
+       pieceMoves2 = filter (not . coordEq pCoord) pieceMoves1
+       pieceMoves3 = filter (not . putUnderCheck board) pieceMoves2
+       pieceMoves4 = filter (not . moveOnOwnPiece board bPiece)
                             pieceMoves3
-       pieceMoves5 = filter (not $ isIllegalJump board bPiece) pieceMoves4
+       pieceMoves5 = filter (not . isIllegalJump board bPiece) pieceMoves4
    in if length pieceMoves4 == 0
       then Left "no moves"
       else Right pieceMoves4

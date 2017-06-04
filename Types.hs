@@ -95,5 +95,3 @@ data Board = Board { getWhitePieces :: [BoardPiece]
                    } deriving (Show)
 
 
-
-

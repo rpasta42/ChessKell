@@ -2,7 +2,7 @@ module Utils
 ( boardToMatrix
 , listSingletonExtract
 , mkPiece
-, getAllBoardPieces, getBoardPieceByPos
+, getAllBoardPieces, getBoardPieceByPos, getBoardPieceByCoord
 , getPieceCoord
 , posToCoord, coordToPos
 , mkBoard
@@ -73,6 +73,9 @@ getBoardPieceByPos b pos =
        coords = filter (\piece -> getPosition piece == pos)
                        pieces
    in listSingletonExtract coords
+
+getBoardPieceByCoord :: Booard -> Coord -> ChessRet BoardPiece
+getBoardPieceByCoord b coord = getBoardPieceByPos b (coordToPos coord)
 
 getPieceCoord :: BoardPiece -> Coord
 getPieceCoord p = posToCoord $ getPosition p

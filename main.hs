@@ -42,15 +42,24 @@ mkMove board from to =
 
 
 
-notPutUnderCheck x = True
+putUnderCheck board to = True
+
+moveOnOwnPiece :: Board -> Coord -> True
+moveOnOwnPiece board to =
+   let getBoardPieceByCoord to
+
+
+
 
 getPieceMoves :: Board -> BoardPiece -> ChessRet [Coord]
 getPieceMoves board piece =
    let pieceMoves1 = filter isMoveOnBoard $ getPieceMoves' piece
        pieceMoves2 = filter (\ coord -> getPieceCoord piece /= coord)
                             pieceMoves1
-       pieceMoves3 = filter notPutUnderCheck pieceMoves2
-   in if length pieceMoves3 == 0
+       pieceMoves3 = filter (not $ putUnderCheck board) pieceMoves2
+       pieceMoves4 = filter (not $ moveOnOwnPiece board) pieceMoves2
+
+   in if length pieceMoves4 == 0
       then Left "no moves"
       else Right pieceMoves3
 
@@ -68,8 +77,18 @@ getPieceMoves' (BoardPiece {getPiece=piece, getColor=color, getPosition=pos}) = 
          helper' Bishop (x,y) =
             let xs = [x-8..x+8]
                 ys = [y-8..y+8]
-            in zip xs ys
-         helper' Queen coord@(x,y) = helper' Rook coord ++ helper' Bishop coord
+            in    zip xs           ys
+               ++ zip (reverse xs) (reverse ys)
+               ++ zip xs           (reverse ys)
+               ++ zip (reverse xs) ys
+         helper' Queen coord@(x,y) = helper' Rook coord ++
+                                     helper' Bishop coord
+         helper' Knight (x, y) =
+            let f1 = (\n -> n+1)
+                f2 = (\n -> n+2)
+                f3 = (\n -> n-1)
+                f4 = (\n -> n-2)
+            in [(x,y)] -- TODO --[(fx x, fy y) | x <-
          helper' King (x,y) =
             let xs = [x-1..x+1]
                 ys = [y-1..y+1]

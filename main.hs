@@ -8,13 +8,14 @@ import qualified Data.List as L
 
 newGame :: Board
 newGame =
-   let mkPawns row color = map (\x -> mkPiece color Pawn (x, row))
+   let mkPawns row color = map (\x -> mkPiece color Pawn (x, row) False)
                                ['A'..'H']
        wPawns = mkPawns 2 White
        bPawns = mkPawns 7 Black
 
        otherPieces = [Rook .. Queen] ++ reverse [Rook .. Bishop]
-       mkOtherPieces color y = map (\(piece, x) -> mkPiece color piece (x, y))
+       mkOtherPieces color y = map (\(piece, x)
+                                       -> mkPiece color piece (x, y) False)
                                    $ zip otherPieces ['A'..'H']
        wOtherPieces = mkOtherPieces White 1
        bOtherPieces = mkOtherPieces Black 8
@@ -59,7 +60,7 @@ getPieceMoves :: Board -> BoardPiece -> ChessRet [Coord]
 getPieceMoves board bPiece =
    let pPiece = getPiece bPiece
        pCoord = getPieceCoord bPiece
-       pieceMoves1 = filter isMoveOnBoard $ getPieceMoves' bPiece
+       pieceMoves1 = filter isMoveOnBoard $ getPieceMoves' board bPiece
        pieceMoves2 = filter (not . coordEq pCoord) pieceMoves1
        pieceMoves3 = filter (not . putUnderCheck board) pieceMoves2
        pieceMoves4 = filter (not . moveOnOwnPiece board bPiece)
@@ -72,42 +73,56 @@ getPieceMoves board bPiece =
 isMoveOnBoard :: Coord -> Bool
 isMoveOnBoard (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
 
-getPieceMoves' :: BoardPiece -> [Coord]
-getPieceMoves' (BoardPiece {getPiece=piece, getColor=color, getPosition=pos}) = helper' piece $ posToCoord pos
-   where helper' Rook (x,y) =
-            let xs = [x-8..x+8]
-                ys = [y+8..y-8]
-                xMoves = map (\x -> (x,y)) xs
-                yMoves = map (\y -> (x, y)) ys
-            in xMoves ++ yMoves
-         helper' Bishop (x,y) =
-            let xs = [x-8..x+8]
-                ys = [y-8..y+8]
-            in    zip xs           ys
-               ++ zip (reverse xs) (reverse ys)
-               ++ zip xs           (reverse ys)
-               ++ zip (reverse xs) ys
-         helper' Queen coord@(x,y) = helper' Rook coord ++
-                                     helper' Bishop coord
-         helper' Knight (x, y) =
-            let f1 = (\n -> n+1)
-                f2 = (\n -> n+2)
-                f3 = (\n -> n-1)
-                f4 = (\n -> n-2)
-            in map (\(fx, fy) -> (fx x, fy y))
-                   [(f1, f2), (f1, f4), --(+1, +2), (+1, -2)
-                    (f3, f2), (f3, f4), --(-1, +2), (-1, -2)
-                    (f2, f1), (f2, f3), --(+2, +1), (+2, -1)
-                    (f4, f1), (f4, f3)] --(-2, +1), (-2, -1)
-         helper' King (x,y) =
-            let xs = [x-1..x+1]
-                ys = [y-1..y+1]
-                xMoves1 = map (\x -> (x,y)) xs
-                yMoves1 = map (\y -> (x,y)) ys
-                horizontal = zip xs ys
-            in zip xs ys
+getPieceMoves' :: Board -> BoardPiece -> [Coord]
+getPieceMoves' b bPiece =
+   let piece = getPiece bPiece
+       color = getColor bPiece
+       pos   = getPosition bPiece
 
+       helper' Rook (x,y) =
+         let xs = [x-8..x+8]
+             ys = [y+8..y-8]
+             xMoves = map (\x -> (x,y)) xs
+             yMoves = map (\y -> (x, y)) ys
+         in xMoves ++ yMoves
 
+       helper' Bishop (x,y) =
+          let xs = [x-8..x+8]
+              ys = [y-8..y+8]
+          in    zip xs           ys
+             ++ zip (reverse xs) (reverse ys)
+             ++ zip xs           (reverse ys)
+             ++ zip (reverse xs) ys
+
+       helper' Queen coord@(x,y) = helper' Rook coord ++
+                                   helper' Bishop coord
+       helper' Knight (x, y) =
+          let f1 = (\n -> n+1)
+              f2 = (\n -> n+2)
+              f3 = (\n -> n-1)
+              f4 = (\n -> n-2)
+          in map (\(fx, fy) -> (fx x, fy y))
+                 [(f1, f2), (f1, f4), --(+1, +2), (+1, -2)
+                  (f3, f2), (f3, f4), --(-1, +2), (-1, -2)
+                  (f2, f1), (f2, f3), --(+2, +1), (+2, -1)
+                  (f4, f1), (f4, f3)] --(-2, +1), (-2, -1)
+
+       helper' King (x,y) = --TODO: check
+          let xs = [x-1..x+1]
+              ys = [y-1..y+1]
+              xMoves1 = map (\x -> (x,y)) xs
+              yMoves1 = map (\y -> (x,y)) ys
+              horizontal = zip xs ys
+          in zip xs ys
+
+       helper' Pawn (x,y) = --TODO: capturing, 2 moves, en-passant
+          if color == White
+          then let newY = y+1
+               in [(x, newY)]
+          else let newY = y-1
+               in [(x, newY)]
+
+   in helper' piece $ posToCoord pos
 
 
 

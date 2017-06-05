@@ -43,10 +43,13 @@ boardToMatrix b =
    in setFromPieces m $ getAllBoardPieces b
 
 
-mkPiece color piece pos = BoardPiece { getColor = color
-                                     , getPiece = piece
-                                     , getPosition = pos
-                                     }
+mkPiece color piece pos moved =
+   BoardPiece { getColor = color
+              , getPiece = piece
+              , getPosition = pos
+              , haveMoved = moved
+              }
+
 mkPieceW = mkPiece White
 mkPieceB = mkPiece Black
 
@@ -83,7 +86,7 @@ movePiece :: Board -> BoardPiece -> Position -> ChessRet Board
 movePiece board
           piece@(BoardPiece {getPiece=p, getColor=c})
           newPos =
-   let newPiece = mkPiece c p newPos
+   let newPiece = mkPiece c p newPos True
        wPieces = getWhitePieces board
        bPieces = getBlackPieces board
        wIndex = L.elemIndex piece wPieces

@@ -21,7 +21,7 @@ isJust Nothing = False
 listSingletonExtract :: [a] -> ChessRet a
 listSingletonExtract lst
    | length lst == 1    = Right $ Prelude.head lst
-   | otherwise = Left "list Singleton extraction failed"
+   | otherwise          = Left "list Singleton extraction failed"
 
 
 

@@ -47,7 +47,7 @@ mkPiece color piece pos moved =
    BoardPiece { getColor = color
               , getPiece = piece
               , getPosition = pos
-              , haveMoved = moved
+              , getHaveMoved = moved
               }
 
 mkPieceW = mkPiece White

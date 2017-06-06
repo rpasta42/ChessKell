@@ -5,6 +5,7 @@ import Utils
 import ChessUtils
 import qualified Data.List as L
 import System.Posix.Unistd (sleep)
+import Debug.Trace
 
 
 newGame :: Board
@@ -102,10 +103,12 @@ getPieceCaptures b moves
              in listFilterLeft [goodP1, goodP2]
 
 getPieceCaptures b moves bPiece@(BoardPiece {getColor=color})  = Right getMoves where
+   --moves = reverse moves'
    pos = getPosition bPiece
    (x,y) = posToCoord pos
-   getMoves' = map (foldr (\ coord@(cX, cY) acc@(prevOccupied, accCaps, accMoves) ->
-                              if prevOccupied
+   getMoves' = map (foldl (\ acc@(prevOccupied, accCaps, accMoves) coord@(cX, cY) ->
+                              if {-trace (if getPiece bPiece == Bishop then ("prevOccupied: " ++ (show $ getPiece bPiece) ++ " " ++ (show acc) ++ " curr: " ++ (show pos)) else "")
+                                       $-} prevOccupied
                               then acc
                               else let bPieceAtCoord' = getBoardPieceByCoord b coord
                                    in if isRight bPieceAtCoord'
@@ -114,7 +117,7 @@ getPieceCaptures b moves bPiece@(BoardPiece {getColor=color})  = Right getMoves 
                                            in if colorPCoord == color
                                               then (True, accCaps, accMoves)
                                               else (True, coord:accCaps, accMoves)
-                                      else (False, accCaps, coord:accMoves))
+                                      else (prevOccupied, accCaps, coord:accMoves))
                           (False, [], []))
                    moves
    getMoves =
@@ -134,7 +137,7 @@ getPieceMoves board bPiece =
        pieceMoves1 = map (filter isMoveOnBoard) $ getPieceMoves' board bPiece
        pieceMoves2 = map (filter (not . coordEq pCoord)) pieceMoves1
        pieceMoves3 = pieceMoves2 --map (filter (not . putUnderCheck board)) pieceMoves2
-       pieceMoves4 = map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
+       pieceMoves4 = pieceMoves3 --map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
        pieceMoves5 = pieceMoves4 --map (filter (not . isIllegalJump board bPiece)) pieceMoves4
    in do capsAndMoves@(captures, moves) <- getPieceCaptures board pieceMoves5 bPiece
          if length captures == 0 && length moves == 0
@@ -164,20 +167,37 @@ getPieceMoves' b bPiece =
        helper' :: Piece -> (Int, Int) -> [[Coord]]
 
        helper' Rook (x,y) =
-         let xs = [x-8..x+8]
-             ys = [y+8..y-8]
-             xMoves = map (\x -> (x,y)) xs
-             yMoves = map (\y -> (x, y)) ys
-         in [xMoves, yMoves]
+         let xs1 = [x..x+8]
+             xs2 = reverse [x-8..x]
+             ys1 = [y..y+8]
+             ys2 = reverse [y-8..y]
+             xMoves1 = map (\x -> (x,y)) xs1
+             xMoves2 = map (\x -> (x,y)) xs2
+             yMoves1 = map (\y -> (x,y)) ys1
+             yMoves2 = map (\y -> (x,y)) ys2
+         in [xMoves1, xMoves2, yMoves1, yMoves2]
 
        helper' Bishop (x,y) =
-         let xs = [x-8..x+8]
+         let xs1 = [x+1..x+8]
+             xs2 = reverse [x-8..x-1]
+             ys1 = [y+1..y+8]
+             ys2 = reverse [y-8..y-1]
+         in [ zip xs1           ys1
+            , zip xs2           ys2
+            , zip xs2           ys1
+            , zip xs1           ys2
+            {-, zip
+            , zip (reverse xs) (reverse ys)
+            , zip xs           (reverse ys)
+            , zip (reverse xs) ys-}
+            ]
+         {-let xs = [x-8..x+8]
              ys = [y-8..y+8]
-         in [ zip xs           ys
+         in [ reverse $ zip xs           ys
             , zip (reverse xs) (reverse ys)
             , zip xs           (reverse ys)
             , zip (reverse xs) ys
-            ]
+            ]-}
 
        helper' Queen coord@(x,y) = helper' Rook coord ++
                                    helper' Bishop coord
@@ -244,7 +264,6 @@ driver =
 -}
 
 --tests:
-
 x1 = newGame
 x2 = boardToMatrix x1
 
@@ -273,12 +292,12 @@ test1 =
        pieceMoveCombos3 = concat pieceMoveCombos2
 
        helper [] = return ()
-       helper (x@(piece, moveTo):xs) =
+       helper (x@(piece@(BoardPiece {getPiece=p}), moveTo):xs) =
           let pieceCoord = getPieceCoord piece
               moveToPos = coordToPos moveTo
               newBoard = movePiece board piece moveToPos
               bMatrix = boardToMatrix <$> newBoard
-          in if isRight bMatrix
+          in if isRight bMatrix -- && p /= Pawn && p /= Knight && p == Rook -- && p == Rook -- && p == Bishop
              then do --displayMatrix . matrixToDisplay . extractRight $ bMatrix
                      print $ extractRight bMatrix
                      --sleep 1

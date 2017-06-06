@@ -56,6 +56,15 @@ isIllegalJump board bPiece to = True
 --snd: a list of all the possible non-capture moves
 getPieceCaptures :: Board ->  [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
 
+getPieceCaptures b moves bPiece@(BoardPiece { getPiece = Knight }) =
+   let flatMoves = concat moves
+       moveCapturePieces = listFilterLeft $ map (getBoardPieceByCoord b) flatMoves
+       moveCaptureCoords = map (posToCoord . getPosition) moveCapturePieces
+       nonCaptureMoves = filter (\x -> not $ x `elem` moveCaptureCoords) flatMoves
+   in Right (moveCaptureCoords, nonCaptureMoves)
+
+
+
 getPieceCaptures b moves
                  bPiece@(BoardPiece { getPiece = Pawn, getColor = c, getPosition = pos })
    = Right (getCaptures, getMoves)

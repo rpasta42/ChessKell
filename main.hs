@@ -8,6 +8,7 @@ import System.Posix.Unistd (sleep)
 import Debug.Trace
 
 removePieceByPos' = flip removePieceByPos
+elem' = flip L.elem
 
 newGame :: Board
 newGame =
@@ -22,29 +23,39 @@ newGame =
                                    $ zip otherPieces ['A'..'H']
        wOtherPieces = mkOtherPieces White 1
        bOtherPieces = mkOtherPieces Black 8
-       board = mkBoard (wPawns++wOtherPieces) (bPawns++bOtherPieces)
+
+       --extraRook = [mkPiece Black Rook ('D', 4) False]
+       extraRook = []
+
+       board = mkBoard (wPawns++wOtherPieces) (bPawns++bOtherPieces ++ extraRook)
    in board
+   --in extractRight $ (removePieceByPos' ('D', 2) board)
    --in extractRight $ (removePieceByPos' ('A', 2) board >>= removePieceByPos' ('B', 2))
 
 
+isUnderCheck :: Board -> Color -> ChessRet Bool
+isUnderCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=bPieces }) colorToCheck =
+   let wKing = getBoardPieceByPiece wPieces King
+       bKing = getBoardPieceByPiece bPieces King
 
+       wKingCoord = getPieceCoord <$> wKing
+       bKingCoord = getPieceCoord <$> bKing
 
+       wCaps = concat . listFilterLeft $ map (\x -> fst <$> getPieceMoves board x) wPieces
+       bCaps = concat . listFilterLeft $ map (\x -> fst <$> getPieceMoves board x) bPieces
 
-isUnderCheck :: Board -> ChessRet Color
-isUnderCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=bPieces }) =
-   let wKing = getBoardPieceByPiece wPieces
-       bKing = getBoardPieceByPiece bPieces
-       (wCaps, wMoves) = listEitherToEitherList $ map getPieceMoves wPieces
-       (bCaps, bMoves) = listEitherToEitherList $ map getPieceMoves bPieces
+       wUnderCheck = elem' bCaps <$> wKingCoord
+       bUnderCheck = elem' wCaps <$> bKingCoord
 
-
-
+   in case colorToCheck of
+         White -> wUnderCheck
+         Black -> bUnderCheck
 
 
 mkMove :: Board -> Position -> Position -> ChessRet Board
 mkMove board from to =
    do piece <- getBoardPieceByPos board from
-      pieceColor <- return $ getPieceColor piece
+      pieceColor <- return $ getColor piece
       pieceMoves <- fmap L.concat $ getPieceMoves board piece
       ret <-
          if (posToCoord to) `elem` pieceMoves
@@ -300,9 +311,13 @@ x6 = fmap boardToMatrix x5
 test1 =
    let board = newGame
        wPieces = getWhitePieces board
-       wMoves = map (getPieceMoves board) wPieces
+       bPieces = getBlackPieces board
 
-       zipped1 = zip (map Right wPieces) wMoves
+       wMoves = map (getPieceMoves board) wPieces
+       bMoves = map (getPieceMoves board) bPieces
+
+       zipped1' = zip (map Right wPieces) wMoves
+       zipped1 = zip (map Right bPieces) bMoves
        zipped2 = listFilterLeft $ map pairEitherToEitherPair zipped1
 
        --[(piece, [moves])]

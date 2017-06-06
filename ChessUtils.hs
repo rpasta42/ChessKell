@@ -62,7 +62,7 @@ mkBoard whitePieces blackPieces =
 
 mkBoardFromPair (wPieces, bPieces) = mkBoard wPieces bPieces
 
---getAllBoardPieces/getBoardPieceByPos/getBoardPieceByCoord
+--getAllBoardPieces/getBoardPieceByPos/getBoardPieceByCoord/GetBoardPieceByPiece
 
 getAllBoardPieces :: Board -> [BoardPiece]
 getAllBoardPieces b =

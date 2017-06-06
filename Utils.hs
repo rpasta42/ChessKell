@@ -1,5 +1,6 @@
 module Utils
-( newMatrix
+( deleteLstIndex, deleteLstItem
+, newMatrix
 , extractJust, isJust
 , extractRight, isRight
 , listSingletonExtract
@@ -13,6 +14,26 @@ import qualified Data.List as L
 
 import Types
 
+
+elemIndex' :: (Eq a) => a -> [a] -> Either String Int
+elemIndex' item items =
+   let i = item `L.elemIndex` items
+   in if isJust i
+      then Right $ extractJust i
+      else Left "index not found"
+
+deleteLstIndex :: [a] -> Int -> [a]
+deleteLstIndex items index = reverse $ helper [] (zip [0..] items)
+   where helper acc [] = acc
+         helper acc ((i, x):xs) =
+            let newAcc = if i == index then acc else x:acc
+             in helper newAcc xs
+
+
+deleteLstItem :: (Eq a) => [a] -> a -> Either String [a]
+deleteLstItem items item =
+   let i = item `elemIndex'` items
+   in deleteLstIndex items <$> i
 
 --notFunc x =
 

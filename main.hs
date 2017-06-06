@@ -21,8 +21,8 @@ newGame =
                                    $ zip otherPieces ['A'..'H']
        wOtherPieces = mkOtherPieces White 1
        bOtherPieces = mkOtherPieces Black 8
-
-   in mkBoard (wPawns++wOtherPieces) (bPawns++bOtherPieces)
+       board = mkBoard (wPawns++wOtherPieces) (bPawns++bOtherPieces)
+   in extractRight $ removePieceByPos board ('A', 2)
 
 mkMove :: Board -> Position -> Position -> ChessRet Board
 mkMove board from to =
@@ -297,7 +297,7 @@ test1 =
               moveToPos = coordToPos moveTo
               newBoard = movePiece board piece moveToPos
               bMatrix = boardToMatrix <$> newBoard
-          in if isRight bMatrix -- && p /= Pawn && p /= Knight && p == Rook -- && p == Rook -- && p == Bishop
+          in if isRight bMatrix && p /= Pawn -- && p /= Knight && p == Rook -- && p == Rook -- && p == Bishop
              then do --displayMatrix . matrixToDisplay . extractRight $ bMatrix
                      print $ extractRight bMatrix
                      --sleep 1

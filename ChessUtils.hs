@@ -4,6 +4,7 @@ module ChessUtils
 , mkPiece, mkBoard
 , getAllBoardPieces, getBoardPieceByPos, getBoardPieceByCoord
 , getPieceCoord
+, removePiece, removePieceByPos
 , movePiece
 , flipColor
 , coordEq
@@ -58,6 +59,7 @@ mkBoard whitePieces blackPieces =
          , getBlackPieces=blackPieces
          }
 
+mkBoardFromPair (wPieces, bPieces) = mkBoard wPieces bPieces
 
 --getAllBoardPieces/getBoardPieceByPos/getBoardPieceByCoord
 
@@ -79,6 +81,24 @@ getBoardPieceByCoord b coord = getBoardPieceByPos b (coordToPos coord)
 
 getPieceCoord :: BoardPiece -> Coord
 getPieceCoord p = posToCoord $ getPosition p
+
+---removePiece/removePieceByPos
+
+removePiece :: Board -> BoardPiece -> ChessRet Board
+removePiece b p@(BoardPiece { getColor=c, getPosition=pos }) =
+   let wPieces = getWhitePieces b
+       bPieces = getBlackPieces b
+       newPieces' = case c of
+          White -> (deleteLstItem wPieces p, Right bPieces)
+          Black -> (Right wPieces, deleteLstItem bPieces p)
+       newPieces = pairEitherToEitherPair newPieces'
+       newBoard = mkBoardFromPair <$> newPieces
+   in newBoard
+
+removePieceByPos :: Board -> Position -> ChessRet Board
+removePieceByPos board pos =
+   let piece = getBoardPieceByPos board pos
+   in piece >>= removePiece board
 
 
 --no checks for valid moves

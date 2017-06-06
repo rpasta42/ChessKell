@@ -69,9 +69,37 @@ getPieceCaptures b moves
             let y1 = if c == White then y+1 else y-1
                 x1 = x+1
                 x2 = x-1
-                cap1 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (y1, x1)
-                cap2 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (y1, x2)
-             in listFilterLeft [cap1, cap2]
+                cap1 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (x1, y1)
+                cap2 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (x2, y1)
+
+                pieceAtC1 = cap1 >>= getBoardPieceByCoord b
+                pieceAtC2 = cap2 >>= getBoardPieceByCoord b
+
+                colorC1 = (\x -> getColor x) <$> pieceAtC1
+                colorC2 = (\x -> getColor x) <$> pieceAtC2
+
+                goodP1 = case colorC1 of
+                  Right color -> if color /= c && (isMoveOnBoard $ extractRight cap1)
+                                 then cap1
+                                 else Left "bad"
+                  Left x -> Left "bad"
+
+                goodP2 = case colorC2 of
+                  Right color -> if color /= c && (isMoveOnBoard $ extractRight cap2)
+                                 then cap2
+                                 else Left "bad"
+                  Left x -> Left "bad"
+
+                {-goodP1 = if isRight pAtCap1'
+                         then let (BoardPiece {getColor=color}) = extractRight pAtCap1'
+                              in if color == c then Left "no" else cap1
+                         else Left "no"
+                goodP2 = if isRight pAtCap2'
+                         then let (BoardPiece {getColor=color}) = extractRight pAtCap2'
+                              in if color == c then Left "no" else cap2
+                         else Left "no"-}
+
+             in listFilterLeft [goodP1, goodP2]
 
 getPieceCaptures b moves bPiece@(BoardPiece {getColor=color})  = Right getMoves where
    pos = getPosition bPiece
@@ -175,7 +203,7 @@ getPieceMoves' b bPiece =
 
        helper' Pawn (x,y) = --TODO: capturing, 2 moves, en-passant
          let newWhite1 = (x, y+1)
-             newWhite2 = (y, y+2)
+             newWhite2 = (x, y+2)
              newBlack1 = (x, y-1)
              newBlack2 = (x, y-2)
              (newWhite, newBlack) =
@@ -253,7 +281,7 @@ test1 =
           in if isRight bMatrix
              then do --displayMatrix . matrixToDisplay . extractRight $ bMatrix
                      print $ extractRight bMatrix
-                     sleep 1
+                     --sleep 1
                      helper xs
              else helper xs
 

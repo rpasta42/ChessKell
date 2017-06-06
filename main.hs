@@ -43,12 +43,12 @@ mkMove board from to =
 
 getPieceCaptures :: Board ->  [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
 
-getPieceCaptures b moves bPiece@(BoardPiece { getPiece = Knight }) =
+{-getPieceCaptures b moves bPiece@(BoardPiece { getPiece = Knight }) =
    let flatMoves = concat moves
        moveCapturePieces = listFilterLeft $ map (getBoardPieceByCoord b) flatMoves
        moveCaptureCoords = map (posToCoord . getPosition) moveCapturePieces
        nonCaptureMoves = filter (\x -> not $ x `elem` moveCaptureCoords) flatMoves
-   in Right (moveCaptureCoords, nonCaptureMoves)
+   in Right (moveCaptureCoords, nonCaptureMoves)-}
 
 getPieceCaptures b moves
                  bPiece@(BoardPiece { getPiece = Pawn, getColor = c, getPosition = pos })
@@ -297,7 +297,7 @@ test1 =
               moveToPos = coordToPos moveTo
               newBoard = movePiece board piece moveToPos
               bMatrix = boardToMatrix <$> newBoard
-          in if isRight bMatrix && p /= Pawn -- && p /= Knight && p == Rook -- && p == Rook -- && p == Bishop
+          in if isRight bMatrix && p /= Pawn && p == Knight -- && p /= Knight && p == Rook -- && p == Rook -- && p == Bishop
              then do --displayMatrix . matrixToDisplay . extractRight $ bMatrix
                      print $ extractRight bMatrix
                      --sleep 1

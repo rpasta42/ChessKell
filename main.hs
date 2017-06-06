@@ -4,7 +4,7 @@ import Types
 import Utils
 import ChessUtils
 import qualified Data.List as L
-import System.Posix.Unistd
+import System.Posix.Unistd (sleep)
 
 
 newGame :: Board
@@ -73,15 +73,19 @@ getPieceCaptures b moves
                 cap2 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (y1, x2)
              in listFilterLeft [cap1, cap2]
 
-getPieceCaptures b moves bPiece = Right getMoves where
+getPieceCaptures b moves bPiece@(BoardPiece {getColor=color})  = Right getMoves where
    pos = getPosition bPiece
    (x,y) = posToCoord pos
    getMoves' = map (foldr (\ coord@(cX, cY) acc@(prevOccupied, accCaps, accMoves) ->
                               if prevOccupied
                               then acc
-                              else let bPieceAtCoord = getBoardPieceByCoord b coord
-                                   in if isRight bPieceAtCoord
-                                      then (True, coord:accCaps, accMoves)
+                              else let bPieceAtCoord' = getBoardPieceByCoord b coord
+                                   in if isRight bPieceAtCoord'
+                                      then let bPieceAtCoord = extractRight bPieceAtCoord'
+                                               colorPCoord = getColor bPieceAtCoord
+                                           in if colorPCoord == color
+                                              then (True, accCaps, accMoves)
+                                              else (True, coord:accCaps, accMoves)
                                       else (False, accCaps, coord:accMoves))
                           (False, [], []))
                    moves
@@ -119,7 +123,7 @@ moveOnOwnPiece board fromPiece to =
    in if isRight destPieceEither
       then let destPiece = extractRight destPieceEither
                destPieceColor = getColor destPiece
-           in destPieceColor /= pColor
+           in destPieceColor == pColor
       else False
 
 getPieceMoves' :: Board -> BoardPiece -> [[Coord]]
@@ -130,6 +134,7 @@ getPieceMoves' b bPiece =
        moved = getHaveMoved bPiece
 
        helper' :: Piece -> (Int, Int) -> [[Coord]]
+
        helper' Rook (x,y) =
          let xs = [x-8..x+8]
              ys = [y+8..y-8]
@@ -224,10 +229,37 @@ x6 = fmap boardToMatrix x5
 
 --fmap (map coordToPos) x5
 
-test1 = do
-   board <- newBoard
-   wPieces <- getWhitePieces board
-   moves <- map ((a,b) -> a++b) $ listFilterLeft $ map getPieceMoves wPieces
+test1 =
+   let board = newGame
+       wPieces = getWhitePieces board
+       wMoves = map (getPieceMoves board) wPieces
+
+       zipped1 = zip (map Right wPieces) wMoves
+       zipped2 = listFilterLeft $ map pairEitherToEitherPair zipped1
+
+       --[(piece, [moves])]
+       pieceMoveCombos1 = map (\(piece, (caps, movs)) -> (piece, caps ++ movs)) zipped2
+
+       pieceMoveCombos2 = map (\(piece, moves) -> (map (\move -> (piece, move)) moves))
+                             pieceMoveCombos1
+       pieceMoveCombos3 = concat pieceMoveCombos2
+
+       helper [] = return ()
+       helper (x@(piece, moveTo):xs) =
+          let pieceCoord = getPieceCoord piece
+              moveToPos = coordToPos moveTo
+              newBoard = movePiece board piece moveToPos
+              bMatrix = boardToMatrix <$> newBoard
+          in if isRight bMatrix
+             then do --displayMatrix . matrixToDisplay . extractRight $ bMatrix
+                     print $ extractRight bMatrix
+                     sleep 1
+                     helper xs
+             else helper xs
+
+   in  helper pieceMoveCombos3
 
 main = test1
+
+
 

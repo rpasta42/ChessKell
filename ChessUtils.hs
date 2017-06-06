@@ -3,6 +3,7 @@ module ChessUtils
 , boardToMatrix
 , mkPiece, mkBoard
 , getAllBoardPieces, getBoardPieceByPos, getBoardPieceByCoord
+, getBoardPieceByPiece
 , getPieceCoord
 , removePiece, removePieceByPos
 , movePiece
@@ -77,6 +78,18 @@ getBoardPieceByPos b pos =
 
 getBoardPieceByCoord :: Board -> Coord -> ChessRet BoardPiece
 getBoardPieceByCoord b coord = getBoardPieceByPos b (coordToPos coord)
+
+getBoardPieceByPiece :: [BoardPiece] -> Piece -> ChessRet BoardPiece
+getBoardPieceByPiece pieces piece =
+   foldl (\ acc bPiece@(BoardPiece { getPiece=p }) ->
+            if isRight acc
+            then acc
+            else if p == piece
+                 then Right bPiece
+                 else acc)
+         (Left "piece not found")
+         pieces
+
 
 
 getPieceCoord :: BoardPiece -> Coord

@@ -7,6 +7,7 @@ import qualified Data.List as L
 import System.Posix.Unistd (sleep)
 import Debug.Trace
 
+removePieceByPos' = flip removePieceByPos
 
 newGame :: Board
 newGame =
@@ -22,11 +23,28 @@ newGame =
        wOtherPieces = mkOtherPieces White 1
        bOtherPieces = mkOtherPieces Black 8
        board = mkBoard (wPawns++wOtherPieces) (bPawns++bOtherPieces)
-   in extractRight $ removePieceByPos board ('A', 2)
+   in board
+   --in extractRight $ (removePieceByPos' ('A', 2) board >>= removePieceByPos' ('B', 2))
+
+
+
+
+
+isUnderCheck :: Board -> ChessRet Color
+isUnderCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=bPieces }) =
+   let wKing = getBoardPieceByPiece wPieces
+       bKing = getBoardPieceByPiece bPieces
+       (wCaps, wMoves) = listEitherToEitherList $ map getPieceMoves wPieces
+       (bCaps, bMoves) = listEitherToEitherList $ map getPieceMoves bPieces
+
+
+
+
 
 mkMove :: Board -> Position -> Position -> ChessRet Board
 mkMove board from to =
    do piece <- getBoardPieceByPos board from
+      pieceColor <- return $ getPieceColor piece
       pieceMoves <- fmap L.concat $ getPieceMoves board piece
       ret <-
          if (posToCoord to) `elem` pieceMoves
@@ -126,9 +144,6 @@ getPieceCaptures b moves bPiece@(BoardPiece {getColor=color})  = Right getMoves 
        in (allCapts, allMoves)
 
 
-
-
-
 --does not account for putting king under check
 getPieceMoves :: Board -> BoardPiece -> ChessRet ([Coord], [Coord])
 getPieceMoves board bPiece =
@@ -144,18 +159,6 @@ getPieceMoves board bPiece =
          then Left "no moves"
          else return capsAndMoves
 
-isMoveOnBoard :: Coord -> Bool
-isMoveOnBoard (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
-
-moveOnOwnPiece :: Board -> BoardPiece -> Coord -> Bool
-moveOnOwnPiece board fromPiece to =
-   let pColor = getColor fromPiece
-       destPieceEither = getBoardPieceByCoord board to
-   in if isRight destPieceEither
-      then let destPiece = extractRight destPieceEither
-               destPieceColor = getColor destPiece
-           in destPieceColor == pColor
-      else False
 
 getPieceMoves' :: Board -> BoardPiece -> [[Coord]]
 getPieceMoves' b bPiece =
@@ -236,11 +239,29 @@ getPieceMoves' b bPiece =
 
    in helper' piece $ posToCoord pos
 
+isMoveOnBoard :: Coord -> Bool
+isMoveOnBoard (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
+
+
+
+{-
+moveOnOwnPiece :: Board -> BoardPiece -> Coord -> Bool
+moveOnOwnPiece board fromPiece to =
+   let pColor = getColor fromPiece
+       destPieceEither = getBoardPieceByCoord board to
+   in if isRight destPieceEither
+      then let destPiece = extractRight destPieceEither
+               destPieceColor = getColor destPiece
+           in destPieceColor == pColor
+      else False
 
 putUnderCheck board to = True
 
 --getPossibleMoves :: Board -> [(Position, Position)]
 --getPossibleMoves _ = []
+
+-}
+
 
 
 ---Utils
@@ -297,7 +318,7 @@ test1 =
               moveToPos = coordToPos moveTo
               newBoard = movePiece board piece moveToPos
               bMatrix = boardToMatrix <$> newBoard
-          in if isRight bMatrix && p /= Pawn && p == Knight -- && p /= Knight && p == Rook -- && p == Rook -- && p == Bishop
+          in if isRight bMatrix -- && p /= Pawn && p /= Knight -- && p == Rook -- && p == Bishop
              then do --displayMatrix . matrixToDisplay . extractRight $ bMatrix
                      print $ extractRight bMatrix
                      --sleep 1

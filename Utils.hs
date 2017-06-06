@@ -15,6 +15,7 @@ import qualified Data.List as L
 import Types
 
 
+
 elemIndex' :: (Eq a) => a -> [a] -> Either String Int
 elemIndex' item items =
    let i = item `L.elemIndex` items
@@ -28,7 +29,6 @@ deleteLstIndex items index = reverse $ helper [] (zip [0..] items)
          helper acc ((i, x):xs) =
             let newAcc = if i == index then acc else x:acc
              in helper newAcc xs
-
 
 deleteLstItem :: (Eq a) => [a] -> a -> Either String [a]
 deleteLstItem items item =

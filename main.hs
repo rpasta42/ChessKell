@@ -51,29 +51,48 @@ putUnderCheck board to = True
 
 isIllegalJump board bPiece to = True
 
---takes board and bPiece and returns a list
---of all the pieces that it can capture
-getPieceCaptures :: Board -> BoardPiece -> ChessRet [Coord]
-getPieceCaptures board bPiece = Left ""
+--takes board and bPiece and returns a pair:
+--fst: with list of all pieces it can capture, and
+--snd: a list of all the possible non-capture moves
+getPieceCaptures :: Board ->  -> [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
+
+getPieceCaptures b moves
+                 bPiece@(BoardPiece { getPiece = Pawn, getColor = c, getPosition = (x,y) })
+   = if c == White
+     then let y1 = y+1
+              x1 = x+1
+              x2 = x-1
+              cap1 = getBoardPieceByCoord (y1, x1)
+              cap2 = getBoardPieceByCoord (y1, x2)
+          in listFilterLeft [cap1, cap2]
+     else let y1 = y-1
+              x1 = x+1
+              x2 = x-1
+              cap1 = getBoardPieceByCoord (y1, x1)
+              cap2 = getBoardPieceByCoord (y1, x2)
+          in listFIlterLeft [cap1, cap2]
+
+getPieceCaptures board bPiece moves = --Left ""
+   map foldr moves
 
 getPieceMoves :: Board -> BoardPiece -> ChessRet [Coord]
 getPieceMoves board bPiece =
    let pPiece = getPiece bPiece
        pCoord = getPieceCoord bPiece
-       pieceMoves1 = filter isMoveOnBoard $ getPieceMoves' board bPiece
-       pieceMoves2 = filter (not . coordEq pCoord) pieceMoves1
-       pieceMoves3 = filter (not . putUnderCheck board) pieceMoves2
-       pieceMoves4 = filter (not . moveOnOwnPiece board bPiece)
-                            pieceMoves3
-       pieceMoves5 = filter (not . isIllegalJump board bPiece) pieceMoves4
-   in if length pieceMoves4 == 0
+       pieceMoves1 = map (filter isMoveOnBoard) $ getPieceMoves' board bPiece
+       pieceMoves2 = map (filter (not . coordEq pCoord)) pieceMoves1
+       pieceMoves3 = map (filter (not . putUnderCheck board)) pieceMoves2
+       pieceMoves4 = map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
+       pieceMoves5 = map (filter (not . isIllegalJump board bPiece)) pieceMoves4
+       possibleCaptures = getPieceCaptures board bPiece pieceMoves5
+   in if length pieceMoves5 == 0
       then Left "no moves"
-      else Right pieceMoves4
+      else Right pieceMoves5
 
 isMoveOnBoard :: Coord -> Bool
 isMoveOnBoard (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
 
-getPieceMoves' :: Board -> BoardPiece -> [Coord]
+getPieceMoves' :: Board -> BoardPiece -> [[Coord]]
 getPieceMoves' b bPiece =
    let piece = getPiece bPiece
        color = getColor bPiece
@@ -85,15 +104,16 @@ getPieceMoves' b bPiece =
              ys = [y+8..y-8]
              xMoves = map (\x -> (x,y)) xs
              yMoves = map (\y -> (x, y)) ys
-         in xMoves ++ yMoves
+         in [xMoves, yMoves]
 
        helper' Bishop (x,y) =
          let xs = [x-8..x+8]
              ys = [y-8..y+8]
-         in    zip xs           ys
-            ++ zip (reverse xs) (reverse ys)
-            ++ zip xs           (reverse ys)
-            ++ zip (reverse xs) ys
+         in [ zip xs           ys,
+            , zip (reverse xs) (reverse ys)
+            , zip xs           (reverse ys)
+            , zip (reverse xs) ys
+            ]
 
        helper' Queen coord@(x,y) = helper' Rook coord ++
                                    helper' Bishop coord
@@ -103,7 +123,7 @@ getPieceMoves' b bPiece =
              f2 = (\n -> n+2)
              f3 = (\n -> n-1)
              f4 = (\n -> n-2)
-         in map (\(fx, fy) -> (fx x, fy y))
+         in map (\(fx, fy) -> [(fx x, fy y)])
                 [(f1, f2), (f1, f4), --(+1, +2), (+1, -2)
                  (f3, f2), (f3, f4), --(-1, +2), (-1, -2)
                  (f2, f1), (f2, f3), --(+2, +1), (+2, -1)
@@ -128,8 +148,8 @@ getPieceMoves' b bPiece =
                   then ([newWhite1], [newBlack1])
                   else ([newWhite1, newWhite2], [newBlack1, newBlack2])
           in if color == White
-             then newWhite
-             else newBlack
+             then [newWhite]
+             else [newBlack]
 
    in helper' piece $ posToCoord pos
 

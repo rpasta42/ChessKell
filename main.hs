@@ -64,19 +64,18 @@ getPieceCaptures b moves bPiece@(BoardPiece { getPiece = Knight }) =
    in Right (moveCaptureCoords, nonCaptureMoves)
 
 
-
 getPieceCaptures b moves
                  bPiece@(BoardPiece { getPiece = Pawn, getColor = c, getPosition = pos })
    = Right (getCaptures, getMoves)
       where
          (x,y) = posToCoord pos
          getMoves' = map (foldr (\ coord@(cX, cY) acc@(previousOccupied, accLst) ->
-                                let bPieceAtCoord = getBoardPieceByCoord b coord
-                                in if previousOccupied
-                                   then acc
-                                   else if isRight bPieceAtCoord
-                                        then (True, accLst)
-                                        else (False, coord:accLst))
+                                   let bPieceAtCoord = getBoardPieceByCoord b coord
+                                   in if previousOccupied
+                                      then acc
+                                      else if isRight bPieceAtCoord
+                                           then (True, accLst)
+                                           else (False, coord:accLst))
                                 (False, []))
                           moves
          getMoves = concat $ map snd getMoves'
@@ -88,6 +87,28 @@ getPieceCaptures b moves
                 cap1 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (y1, x1)
                 cap2 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (y1, x2)
              in listFilterLeft [cap1, cap2]
+
+
+
+getPieceCaptures b moves bPiece = Right getMoves where
+   pos = getPosition bPiece
+   (x,y) = posToCoord pos
+   getMoves' = map (foldr (\ coord@(cX, cY) acc@(prevOccupied, accCaps, accMoves) ->
+                              if prevOccupied
+                              then acc
+                              else let bPieceAtCoord = getBoardPieceByCoord b coord
+                                   in if isRight bPieceAtCoord
+                                      then (True, coord:accCaps, accMoves)
+                                      else (False, accCaps, coord:accMoves))
+                          (False, [], []))
+                   moves
+   getMoves =
+      let allCapts = concat $ map (\(_, caps, moves) -> caps) getMoves'
+          allMoves = concat $ map (\(_, caps, moves) -> moves) getMoves'
+       in (allCapts, allMoves)
+
+
+
 
 
 --getPieceCaptures board bPiece moves = --Left ""

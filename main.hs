@@ -4,6 +4,7 @@ import Types
 import Utils
 import ChessUtils
 import qualified Data.List as L
+import System.Posix.Unistd
 
 
 newGame :: Board
@@ -32,21 +33,6 @@ mkMove board from to =
          else Left "mkMove: not a valid move"
       return ret
 
-
---movePiece board piece to =
---showBoard b =
-
-putUnderCheck board to = True
-
-moveOnOwnPiece :: Board -> BoardPiece -> Coord -> Bool
-moveOnOwnPiece board fromPiece to =
-   let pColor = getColor fromPiece
-       destPieceEither = getBoardPieceByCoord board to
-   in if isRight destPieceEither
-      then let destPiece = extractRight destPieceEither
-               destPieceColor = getColor destPiece
-           in destPieceColor /= pColor
-      else False
 
 
 {-getPieceCaptures :: Board -> [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
@@ -108,10 +94,8 @@ getPieceCaptures b moves bPiece = Right getMoves where
 
 
 
---getPieceCaptures board bPiece moves = --Left ""
---   map foldr moves
-
-getPieceMoves :: Board -> BoardPiece -> ChessRet [[Coord]]
+--does not account for putting king under check
+getPieceMoves :: Board -> BoardPiece -> ChessRet ([Coord], [Coord])
 getPieceMoves board bPiece =
    let pPiece = getPiece bPiece
        pCoord = getPieceCoord bPiece
@@ -120,13 +104,23 @@ getPieceMoves board bPiece =
        pieceMoves3 = pieceMoves2 --map (filter (not . putUnderCheck board)) pieceMoves2
        pieceMoves4 = map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
        pieceMoves5 = pieceMoves4 --map (filter (not . isIllegalJump board bPiece)) pieceMoves4
-       possibleCaptures = getPieceCaptures board pieceMoves5 bPiece
-   in if length pieceMoves5 == 0
-      then Left "no moves"
-      else Right pieceMoves5
+   in do capsAndMoves@(captures, moves) <- getPieceCaptures board pieceMoves5 bPiece
+         if length captures == 0 && length moves == 0
+         then Left "no moves"
+         else return capsAndMoves
 
 isMoveOnBoard :: Coord -> Bool
 isMoveOnBoard (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
+
+moveOnOwnPiece :: Board -> BoardPiece -> Coord -> Bool
+moveOnOwnPiece board fromPiece to =
+   let pColor = getColor fromPiece
+       destPieceEither = getBoardPieceByCoord board to
+   in if isRight destPieceEither
+      then let destPiece = extractRight destPieceEither
+               destPieceColor = getColor destPiece
+           in destPieceColor /= pColor
+      else False
 
 getPieceMoves' :: Board -> BoardPiece -> [[Coord]]
 getPieceMoves' b bPiece =
@@ -190,9 +184,10 @@ getPieceMoves' b bPiece =
    in helper' piece $ posToCoord pos
 
 
+putUnderCheck board to = True
 
-getPossibleMoves :: Board -> [(Position, Position)]
-getPossibleMoves _ = []
+--getPossibleMoves :: Board -> [(Position, Position)]
+--getPossibleMoves _ = []
 
 
 ---Utils
@@ -215,6 +210,8 @@ driver =
    game <- loop board White
 -}
 
+--tests:
+
 x1 = newGame
 x2 = boardToMatrix x1
 
@@ -227,4 +224,10 @@ x6 = fmap boardToMatrix x5
 
 --fmap (map coordToPos) x5
 
+test1 = do
+   board <- newBoard
+   wPieces <- getWhitePieces board
+   moves <- map ((a,b) -> a++b) $ listFilterLeft $ map getPieceMoves wPieces
+
+main = test1
 

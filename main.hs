@@ -36,6 +36,7 @@ mkMove board from to =
 --movePiece board piece to =
 --showBoard b =
 
+putUnderCheck board to = True
 
 moveOnOwnPiece :: Board -> BoardPiece -> Coord -> Bool
 moveOnOwnPiece board fromPiece to =
@@ -47,13 +48,12 @@ moveOnOwnPiece board fromPiece to =
            in destPieceColor /= pColor
       else False
 
-putUnderCheck board to = True
 
-isIllegalJump board bPiece to = True
-
+{-getPieceCaptures :: Board -> [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
 --takes board and bPiece and returns a pair:
 --fst: with list of all pieces it can capture, and
---snd: a list of all the possible non-capture moves
+--snd: a list of all the possible non-capture moves-}
+
 getPieceCaptures :: Board ->  [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
 
 getPieceCaptures b moves bPiece@(BoardPiece { getPiece = Knight }) =
@@ -62,7 +62,6 @@ getPieceCaptures b moves bPiece@(BoardPiece { getPiece = Knight }) =
        moveCaptureCoords = map (posToCoord . getPosition) moveCapturePieces
        nonCaptureMoves = filter (\x -> not $ x `elem` moveCaptureCoords) flatMoves
    in Right (moveCaptureCoords, nonCaptureMoves)
-
 
 getPieceCaptures b moves
                  bPiece@(BoardPiece { getPiece = Pawn, getColor = c, getPosition = pos })
@@ -87,8 +86,6 @@ getPieceCaptures b moves
                 cap1 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (y1, x1)
                 cap2 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (y1, x2)
              in listFilterLeft [cap1, cap2]
-
-
 
 getPieceCaptures b moves bPiece = Right getMoves where
    pos = getPosition bPiece
@@ -120,9 +117,9 @@ getPieceMoves board bPiece =
        pCoord = getPieceCoord bPiece
        pieceMoves1 = map (filter isMoveOnBoard) $ getPieceMoves' board bPiece
        pieceMoves2 = map (filter (not . coordEq pCoord)) pieceMoves1
-       pieceMoves3 = map (filter (not . putUnderCheck board)) pieceMoves2
+       pieceMoves3 = pieceMoves2 --map (filter (not . putUnderCheck board)) pieceMoves2
        pieceMoves4 = map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
-       pieceMoves5 = map (filter (not . isIllegalJump board bPiece)) pieceMoves4
+       pieceMoves5 = pieceMoves4 --map (filter (not . isIllegalJump board bPiece)) pieceMoves4
        possibleCaptures = getPieceCaptures board pieceMoves5 bPiece
    in if length pieceMoves5 == 0
       then Left "no moves"
@@ -169,13 +166,13 @@ getPieceMoves' b bPiece =
                  (f2, f1), (f2, f3), --(+2, +1), (+2, -1)
                  (f4, f1), (f4, f3)] --(-2, +1), (-2, -1)
 
-       {-helper' King (x,y) = --TODO: check
+       helper' King (x,y) = --TODO: check
          let xs = [x-1..x+1]
              ys = [y-1..y+1]
-             xMoves1 = map (\x -> (x,y)) xs
-             yMoves1 = map (\y -> (x,y)) ys
-             horizontal = zip xs ys
-         in zip xs ys-}
+             --xMoves1 = map (\x -> (x,y)) xs
+             --yMoves1 = map (\y -> (x,y)) ys
+             --horizontal = zip xs ys
+         in [[(x,y)] | x <- xs, y <- ys] --zip xs ys
 
        helper' Pawn (x,y) = --TODO: capturing, 2 moves, en-passant
          let newWhite1 = (x, y+1)

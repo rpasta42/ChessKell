@@ -5,7 +5,7 @@ module Types
 , Color(White, Black)
 , Position
 , Coord
-, BoardPiece(BoardPiece, getPiece, getColor, getPosition, haveMoved)
+, BoardPiece(..)
 , Board(Board, getWhitePieces, getBlackPieces)
 ) where
 
@@ -88,7 +88,7 @@ data Color = White | Black
 data BoardPiece = BoardPiece { getPiece :: Piece
                              , getColor :: Color
                              , getPosition :: Position
-                             , haveMoved :: Bool
+                             , getHaveMoved :: Bool
                              } deriving (Show, Eq)
 
 data Board = Board { getWhitePieces :: [BoardPiece]

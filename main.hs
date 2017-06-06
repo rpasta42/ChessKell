@@ -25,7 +25,7 @@ newGame =
 mkMove :: Board -> Position -> Position -> ChessRet Board
 mkMove board from to =
    do piece <- getBoardPieceByPos board from
-      pieceMoves <- getPieceMoves board piece
+      pieceMoves <- fmap L.concat $ getPieceMoves board piece
       ret <-
          if (posToCoord to) `elem` pieceMoves
          then movePiece board piece to
@@ -54,28 +54,37 @@ isIllegalJump board bPiece to = True
 --takes board and bPiece and returns a pair:
 --fst: with list of all pieces it can capture, and
 --snd: a list of all the possible non-capture moves
-getPieceCaptures :: Board ->  -> [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
+getPieceCaptures :: Board ->  [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
 
 getPieceCaptures b moves
-                 bPiece@(BoardPiece { getPiece = Pawn, getColor = c, getPosition = (x,y) })
-   = if c == White
-     then let y1 = y+1
-              x1 = x+1
-              x2 = x-1
-              cap1 = getBoardPieceByCoord (y1, x1)
-              cap2 = getBoardPieceByCoord (y1, x2)
-          in listFilterLeft [cap1, cap2]
-     else let y1 = y-1
-              x1 = x+1
-              x2 = x-1
-              cap1 = getBoardPieceByCoord (y1, x1)
-              cap2 = getBoardPieceByCoord (y1, x2)
-          in listFIlterLeft [cap1, cap2]
+                 bPiece@(BoardPiece { getPiece = Pawn, getColor = c, getPosition = pos })
+   = Right (getCaptures, getMoves)
+      where
+         (x,y) = posToCoord pos
+         getMoves' = map (foldr (\ coord@(cX, cY) acc@(previousOccupied, accLst) ->
+                                let bPieceAtCoord = getBoardPieceByCoord b coord
+                                in if previousOccupied
+                                   then acc
+                                   else if isRight bPieceAtCoord
+                                        then (True, accLst)
+                                        else (False, coord:accLst))
+                                (False, []))
+                          moves
+         getMoves = concat $ map snd getMoves'
 
-getPieceCaptures board bPiece moves = --Left ""
-   map foldr moves
+         getCaptures =
+            let y1 = if c == White then y+1 else y-1
+                x1 = x+1
+                x2 = x-1
+                cap1 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (y1, x1)
+                cap2 = (posToCoord . getPosition) <$> getBoardPieceByCoord b (y1, x2)
+             in listFilterLeft [cap1, cap2]
 
-getPieceMoves :: Board -> BoardPiece -> ChessRet [Coord]
+
+--getPieceCaptures board bPiece moves = --Left ""
+--   map foldr moves
+
+getPieceMoves :: Board -> BoardPiece -> ChessRet [[Coord]]
 getPieceMoves board bPiece =
    let pPiece = getPiece bPiece
        pCoord = getPieceCoord bPiece
@@ -84,7 +93,7 @@ getPieceMoves board bPiece =
        pieceMoves3 = map (filter (not . putUnderCheck board)) pieceMoves2
        pieceMoves4 = map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
        pieceMoves5 = map (filter (not . isIllegalJump board bPiece)) pieceMoves4
-       possibleCaptures = getPieceCaptures board bPiece pieceMoves5
+       possibleCaptures = getPieceCaptures board pieceMoves5 bPiece
    in if length pieceMoves5 == 0
       then Left "no moves"
       else Right pieceMoves5
@@ -99,6 +108,7 @@ getPieceMoves' b bPiece =
        pos   = getPosition bPiece
        moved = getHaveMoved bPiece
 
+       helper' :: Piece -> (Int, Int) -> [[Coord]]
        helper' Rook (x,y) =
          let xs = [x-8..x+8]
              ys = [y+8..y-8]
@@ -109,7 +119,7 @@ getPieceMoves' b bPiece =
        helper' Bishop (x,y) =
          let xs = [x-8..x+8]
              ys = [y-8..y+8]
-         in [ zip xs           ys,
+         in [ zip xs           ys
             , zip (reverse xs) (reverse ys)
             , zip xs           (reverse ys)
             , zip (reverse xs) ys
@@ -129,17 +139,16 @@ getPieceMoves' b bPiece =
                  (f2, f1), (f2, f3), --(+2, +1), (+2, -1)
                  (f4, f1), (f4, f3)] --(-2, +1), (-2, -1)
 
-       helper' King (x,y) = --TODO: check
+       {-helper' King (x,y) = --TODO: check
          let xs = [x-1..x+1]
              ys = [y-1..y+1]
              xMoves1 = map (\x -> (x,y)) xs
              yMoves1 = map (\y -> (x,y)) ys
              horizontal = zip xs ys
-         in zip xs ys
+         in zip xs ys-}
 
        helper' Pawn (x,y) = --TODO: capturing, 2 moves, en-passant
-         let
-             newWhite1 = (x, y+1)
+         let newWhite1 = (x, y+1)
              newWhite2 = (y, y+2)
              newBlack1 = (x, y-1)
              newBlack2 = (x, y-2)

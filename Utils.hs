@@ -35,7 +35,7 @@ listSingletonExtract lst
    | length lst == 1    = Right $ Prelude.head lst
    | otherwise          = Left "list Singleton extraction failed"
 
-listHasAtLeast1 :: [a] -> Either CircError [a]
+listHasAtLeast1 :: [a] -> ChessRet [a]
 listHasAtLeast1 lst
    | length lst >= 1    = Right lst
    | otherwise          = Left "listHasAtLeast1Extract: less than 1 in the list"

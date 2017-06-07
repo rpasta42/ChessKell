@@ -1,0 +1,41 @@
+d2,d4
+d7,d5
+e2,e4
+d5,e4
+b1,c3
+e7,e5
+d1,h5
+g7,g6
+h5,e5 --white puts black under check
+f8,e7 --black under check, have to block
+e5,h8 --capture rook
+g8,f6 --supposed to be illegal for black
+a7,a6
+h8,g8 --eat horse
+a6,a5 --illegal, coz black under check again
+e8,d7 --move away from check (fails here!!!)
+g8,d8 --eat black queen
+d7,c6 --king runs
+d4,d6 --illegal pawn 2 jump after we already did jump
+d4,d5 --check king with pawn
+c6,b6 --king runs
+c3,a4 --check king with knight
+g6,g5 --invalid pawn move, coz under check
+b6,a7 --king exercising
+c1,e3 --check with bishop
+b7,b6 --protect with pawn
+d8,c7 --check with queen
+c8,b7 --protect with bishop
+c7,b6 --checkmate
+
+
+PNG:
+1. d4 d5 2. e4 dxe4 3. Nc3 e5 4. Qh5 g6
+5. Qxe5+ Be7 6. Qxh8 a6 7. Qxg8+ Kd7 8. Qxd8+ Kc6
+9. d5+ Kb6 10. Na4+ Ka7 11. Be3+ b6 12. Qxc7+ Bb7
+13. Qxb6#
+
+
+FEN:
+rn6/kb2bp1p/pQ4p1/3P4/N3p3/4B3/PPP2PPP/R3KBNR b KQ - 0 13
+

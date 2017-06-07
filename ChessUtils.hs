@@ -147,24 +147,27 @@ movePiece :: Board -> BoardPiece -> PieceMoves
           -> Position -> ChessRet Board
 movePiece board
           piece@(BoardPiece {getPiece=p, getColor=c})
-          pMoves
+          pMoves@(_, captures, moves)
           newPos =
    let newPiece = mkPiece c p newPos True
        wPieces = getWhitePieces board
        bPieces = getBlackPieces board
        wIndex = L.elemIndex piece wPieces
        bIndex = L.elemIndex piece bPieces
+   in case (wIndex, bIndex) of
+         (Just wIndex', Nothing) ->
+            let (part1, (_:part2)) = L.splitAt wIndex' wPieces
+                newPiecesW = part1 ++ [newPiece] ++ part2
+            in Right $ mkBoard newPiecesW bPieces
 
-   in if isJust wIndex
-      then let (part1, (_:part2)) = L.splitAt (extractJust wIndex) wPieces
-               newPiecesW = part1 ++ [newPiece] ++ part2
-           in Right $ mkBoard newPiecesW bPieces
-      else if isJust bIndex
-           then let (part1, (_:part2)) = L.splitAt (extractJust bIndex)
-                                                   bPieces
-                    newPiecesB = part1 ++ [newPiece] ++ part2
-                in Right $ mkBoard wPieces newPiecesB
-           else Left "movePiece fail: piece not found"
+         (Nothing, Just bIndex') ->
+            let (part1, (_:part2)) = L.splitAt bIndex' bPieces
+                newPiecesB = part1 ++ [newPiece] ++ part2
+            in Right $ mkBoard wPieces newPiecesB
+
+         _ -> Left "movePiece pattern fail: piece not found or both in black/white"
+
+
 
 
 --small funcs

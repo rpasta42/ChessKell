@@ -381,7 +381,7 @@ getPieceMoves' b bPiece =
              (newWhite, newBlack) =
                   if moved
                   then ([newWhite1], [newBlack1])
-                  else ([newWhite1, newWhite2], [newBlack1, newBlack2])
+                  else ([newWhite2, newWhite1], [newBlack2, newBlack1])
           in if color == White
              then [newWhite]
              else [newBlack]

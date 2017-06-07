@@ -1,0 +1,23 @@
+
+from here: https://www.chess.com/forum/view/fun-with-chess/fastest-stalemate
+
+c2,c4 --white pawn
+h7,h5 --black
+h2,h4 --white
+a7,a5 --black
+d1,a4 --white queen
+a8,a6 --black rook
+a4,a5 --white queen eats pawn
+a6,h6 --black rook moves to opposite side
+a5,c7 --white queen goes near black queen
+f7,f6 --black pawn
+c7,d7 --white checks king
+e8,f7 --black king moves away from queen
+d7,b7 --white eats black pawn
+d8,d3 --black queen goes to white territory
+b7,b8 --white queen eats knight
+d3,h7 --black queen goes into rook corner
+b8,c8 --white queen eats bishop
+f7,g6 --black king moves to right
+c8,e6 --stalemate
+

@@ -138,7 +138,7 @@ step board color (from, to) =
              {-isStaleMate = filter ((/=) True)
                                   (map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard))-}
 
-             isStaleMate = allUnderCheck
+             isStaleMate = allUnderCheck'
 
          in case (isCheckMate, isStaleMate, isUnderCheckNextMove, isUnderCheckPrevMove) of
                (True, _, _, _)      -> Left $ IsCheckMate color

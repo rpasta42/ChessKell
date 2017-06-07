@@ -8,6 +8,7 @@ module Utils
 , pairToList
 , pairEitherToEitherPair
 , matrixToDisplay, displayMatrix
+, matrixMap, matrixMap'
 ) where
 
 import qualified Data.Matrix as M

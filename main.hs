@@ -98,19 +98,6 @@ step board color (from, to) =
                _ -> Right newBoard
 
 
-
-mkMove :: Board -> Position -> Position -> ChessRet Board
-mkMove board from to =
-   do piece <- getBoardPieceByPos board from
-      pieceColor <- return $ getColor piece
-      pieceMoves' <- (concat . pairToList) <$> getPieceMoves board piece
-      pieceMoves <- return $ trace (show pieceMoves') pieceMoves'
-      ret <-
-         if (posToCoord to) `elem` pieceMoves
-         then movePiece board piece to
-         else Left "mkMove: not a valid move"
-      return ret
-
 getPossibleMoves :: Board -> Color -> [PieceMoves]
 getPossibleMoves b White = listFilterLeft $ getPossibleMoves' b (getWhitePieces b) []
 getPossibleMoves b Black = listFilterLeft $ getPossibleMoves' b (getBlackPieces b) []
@@ -131,7 +118,7 @@ newGame =
        wPawns = mkPawns 2 White
        bPawns = mkPawns 7 Black
 
-       otherPieces = [Rook .. Queen] ++ reverse [Rook .. Bishop]
+       otherPieces = [Rook .. King] ++ reverse [Rook .. Bishop]
        mkOtherPieces color y = map (\(piece, x)
                                        -> mkPiece color piece (x, y) False)
                                    $ zip otherPieces ['A'..'H']
@@ -384,9 +371,9 @@ x2 = boardToMatrix x1
 x3 = getBoardPieceByPos x1 ('C', 1)
 x4 = x3 >>= getPieceMoves x1
 
-x5 = mkMove x1 ('C', 1) ('D', 2)
-x6 = fmap boardToMatrix x5
-(Right x7) = x6
+--x5 = mkMove x1 ('C', 1) ('D', 2)
+--x6 = fmap boardToMatrix x5
+--(Right x7) = x6
 
 --fmap (map coordToPos) x5
 

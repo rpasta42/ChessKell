@@ -30,12 +30,26 @@ coordToPos (x, y) = (cX, y)
 
 
 
+newGameBoard =
+   let board1 = newMatrix 10 10 " "
+       board2 =
+         matrixMap board1
+                   (\e (x,y) _ _ ->
+                        if x == 10 && y <= 8
+                        then [C.intToDigit y]
+                        else if y == 10 && x <= 8
+                             then [C.chr (C.ord 'A' + x - 1)]
+                             else e)
+                   " "
+   in board2
+
+
 boardToMatrix :: Board -> M.Matrix String
 boardToMatrix b = displayBoardByColor b White
 
 displayBoardByColor :: Board -> Color -> M.Matrix String
 displayBoardByColor b c =
-   let m = newMatrix 8 8 " "
+   let m = newGameBoard --newMatrix 8 8 " "
        setFromPieces m [] = m
        setFromPieces m (x:xs) =
          let coord@(x_,y_) = posToCoord $ getPosition x
@@ -47,8 +61,12 @@ displayBoardByColor b c =
              newM = M.setElem pieceChar (y_,x_) m
          in setFromPieces newM xs
    in let ret1 = setFromPieces m $ getAllBoardPieces b
-          ret2 = M.fromLists . reverse . M.toLists $ ret1
-      in if c == White then ret2 else ret1
+          ret2 = let lsts = M.toLists ret1
+                     reversed = reverse . init . init $ lsts
+                 in M.fromLists $ reversed ++ [last $ init lsts]
+                                           ++ [last lsts]
+                 --M.fromLists . reverse . M.toLists $ ret1
+      in if c == Black then ret1 else ret2
 
 
 mkPiece color piece pos moved =

@@ -14,7 +14,7 @@ type Coord = (Int, Int)
 
 type ChessRet a = Either String a
 
-data Piece = Pawn | Rook | Knight | Bishop | King | Queen | Empty
+data Piece = Pawn | Rook | Knight | Bishop | Queen | King | Empty
    deriving (Enum) --Eq, Ord, Bounded, Enum)
 
 instance Show Piece where

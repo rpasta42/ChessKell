@@ -32,8 +32,8 @@ setlocal nodiff
 setlocal equalprg=
 setlocal errorformat=
 setlocal expandtab
-if &filetype != 'haskell'
-setlocal filetype=haskell
+if &filetype != 'text'
+setlocal filetype=text
 endif
 setlocal fixendofline
 setlocal foldcolumn=0
@@ -92,8 +92,8 @@ setlocal statusline=
 setlocal suffixesadd=
 setlocal swapfile
 setlocal synmaxcol=3000
-if &syntax != 'haskell'
-setlocal syntax=haskell
+if &syntax != 'text'
+setlocal syntax=text
 endif
 setlocal tabstop=6
 setlocal tagcase=
@@ -107,16 +107,11 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-1,11fold
-21,28fold
-30,37fold
-41,52fold
-54,84fold
-let s:l = 1 - ((0 * winheight(0) + 20) / 41)
+let s:l = 22 - ((19 * winheight(0) + 10) / 21)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-1
+22
 normal! 0
 let &so = s:so_save | let &siso = s:siso_save
 doautoall SessionLoadPost

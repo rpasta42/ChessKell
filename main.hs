@@ -29,7 +29,7 @@ gameLoop board whosTurn = do
    then let newBoard = extractRight newBoard'
             nextTurn = flipColor whosTurn
         in do putStrLn "board after move:"
-              print $ displayBoardByColor newBoard nextTurn
+              print $ displayBoardByColor newBoard whosTurn
               putStrLn $ "\n\n================" ++ (show nextTurn) ++ "'s Turn\n"
               print $ displayBoardByColor newBoard nextTurn
               gameLoop newBoard nextTurn
@@ -83,7 +83,7 @@ data StepFailure = IsStaleMate | IsCheckMate Color | IsInvalidMove String
 
 step :: Board -> Color -> Move -> Either StepFailure Board
 step board color (from, to) =
-   let isUnderCheck1' = isUnderCheck color board
+   let isUnderCheckPrevMove' = isUnderCheck color board
        toCoord = posToCoord to
        piece' = getBoardPieceByPos board from
        pColor' = getColor <$> piece'
@@ -92,8 +92,8 @@ step board color (from, to) =
        newBoard' = do pieceMoves1 <- pieceMoves1'
                       piece <- piece'
                       movePiece' board to pieceMoves1 piece
-       isUnderCheck2' = newBoard' >>= isUnderCheck color
-   in case (piece', pColor', pieceMoves', newBoard', isUnderCheck2', isUnderCheck1') of
+       isUnderCheckNextMove' = newBoard' >>= isUnderCheck color
+   in case (piece', pColor', pieceMoves', newBoard', isUnderCheckNextMove', isUnderCheckPrevMove') of
       ((Left s), _, _, _, _, _)                 -> Left . IsPieceNotFound $ "empty square selected: " ++ s
       (_, (Right pColor), _, _, _, _)
          | pColor /= color                      -> Left $ IsInvalidMove "wrong color peice"
@@ -101,22 +101,37 @@ step board color (from, to) =
       (_, _, (Right pieceMoves), _, _, _)
          | not $ toCoord `elem` pieceMoves      -> Left $ IsInvalidMove "cannot perform that move"
       (_, _, _, Left s, _, _)                   -> Left . IsOtherFailure $ "movePiece failed: " ++ s
-      (_, _, _, _, Left s, _)                   -> Left . IsOtherFailure $ "isUnderCheck2 failed: " ++ s
-      (_, _, _, _, _, Left s)                   -> Left . IsOtherFailure $ "isUnderCheck1 failed: " ++ s
-      --(_, _, _, _, Right True, _)               -> Left $ IsInvalidMove "moves puts player under check" ++ s
-      (Right piece, Right pColor, Right pieceMoves, Right newBoard, Right isUnderCheck2, Right isUnderCheck1) ->
-         let allMoves = getPossibleMoves board color
+      (_, _, _, _, Left s, _)                   -> Left . IsOtherFailure $ "isUnderCheckNextMove failed: " ++ s
+      (_, _, _, _, _, Left s)                   -> Left . IsOtherFailure $ "isUnderCheckPrevMove failed: " ++ s
+      --(_, _, _, _, Right True, Right True)      -> Left $ IsInvalidMove "move away from check!"
+      (Right piece, Right pColor, Right pieceMoves, Right newBoard, Right isUnderCheckNextMove, Right isUnderCheckPrevMove) ->
+         let nextColor = flipColor color
+             allMoves = getPossibleMoves newBoard nextColor
              allNewBoards' = map (\pMoves@(bPiece, caps, moves)
-                                    ->    (map (\x -> movePiece board bPiece pMoves $ coordToPos x) caps)
-                                       ++ (map (\x -> movePiece board bPiece pMoves $ coordToPos x) moves))
+                                    ->    (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) caps)
+                                       ++ (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) moves))
                                  allMoves
              allNewBoards = listFilterLeft $ concat allNewBoards'
-             allUnderCheck = all (\testBoard -> extractRight $ isUnderCheck color testBoard) allNewBoards
-             isCheckMate = isUnderCheck1 && allUnderCheck
+
+             allUnderCheck' = all (\testBoard -> extractRight $ isUnderCheck nextColor testBoard) allNewBoards
+
+             {-allUnderCheckLst = map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard) allNewBoards
+             allUnderCheck = trace ((show allUnderCheckLst) ++ ("\nmoves:" ++ show allMoves))
+                                   $ allUnderCheck'-}
+
+             isCheckMate' = allUnderCheck'
+
+             isCheckMate = if isUnderCheckPrevMove then
+                                 trace ((show color) ++ " is under check!!")
+                                       isCheckMate'
+                           else isCheckMate'
              isStaleMate = length allMoves == 0
-         in case (isCheckMate, isStaleMate) of
-               (True, _) -> Left $ IsCheckMate (flipColor color)
-               (_, True) -> Left IsStaleMate
+         in case (isCheckMate, isStaleMate, isUnderCheckNextMove, isUnderCheckPrevMove) of
+               (True, _, _, _)      -> Left $ IsCheckMate color
+               (_, True, _, _)      -> Left IsStaleMate
+               (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"
+               (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
+
                _ -> Right newBoard
 
 

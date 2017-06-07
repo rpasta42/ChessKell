@@ -1,5 +1,6 @@
 module Utils
 ( deleteLstIndex, deleteLstItem
+, replaceLstIndex
 , newMatrix
 , extractJust, isJust
 , extractRight, isRight
@@ -36,6 +37,12 @@ deleteLstItem :: (Eq a) => [a] -> a -> Either String [a]
 deleteLstItem items item =
    let i = item `elemIndex'` items
    in deleteLstIndex items <$> i
+
+
+replaceLstIndex lst i newItem =
+   let (part1, (_:part2)) = L.splitAt i lst
+       newLst = part1 ++ [newItem] ++ part2
+   in newLst
 
 --notFunc x =
 

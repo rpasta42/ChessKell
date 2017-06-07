@@ -149,25 +149,33 @@ movePiece board
           piece@(BoardPiece {getPiece=p, getColor=c})
           pMoves@(_, captures, moves)
           newPos =
-   let newPiece = mkPiece c p newPos True
-       wPieces = getWhitePieces board
-       bPieces = getBlackPieces board
+   let newBoard = removePieceAtPos board newPos
+       newPiece = mkPiece c p newPos True
+       wPieces = getWhitePieces newBoard
+       bPieces = getBlackPieces newBoard
        wIndex = L.elemIndex piece wPieces
        bIndex = L.elemIndex piece bPieces
    in case (wIndex, bIndex) of
          (Just wIndex', Nothing) ->
-            let (part1, (_:part2)) = L.splitAt wIndex' wPieces
-                newPiecesW = part1 ++ [newPiece] ++ part2
-            in Right $ mkBoard newPiecesW bPieces
-
+            Right $ mkBoard (replaceLstIndex wPieces wIndex' newPiece)
+                            bPieces
          (Nothing, Just bIndex') ->
-            let (part1, (_:part2)) = L.splitAt bIndex' bPieces
-                newPiecesB = part1 ++ [newPiece] ++ part2
-            in Right $ mkBoard wPieces newPiecesB
+            Right $ mkBoard wPieces
+                            (replaceLstIndex bPieces bIndex' newPiece)
+         _ -> Left $ "movePiece pattern fail: piece not found"
+                     ++ " or both in black/white"
 
-         _ -> Left "movePiece pattern fail: piece not found or both in black/white"
-
-
+removePieceAtPos :: Board -> Position -> Board
+removePieceAtPos b pos =
+   case getBoardPieceByPos b pos of
+      (Left _)  -> b
+      (Right piece) ->
+         let color = getColor piece
+             wPieces = getWhitePieces b
+             bPieces = getBlackPieces b
+         in if color == White
+            then mkBoard (extractRight $ deleteLstItem wPieces piece) bPieces
+            else mkBoard wPieces (extractRight $ deleteLstItem bPieces piece)
 
 
 --small funcs

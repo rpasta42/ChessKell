@@ -1,12 +1,12 @@
 module ChessUtils
 ( posToCoord, coordToPos
-, boardToMatrix
+, boardToMatrix, displayBoardByColor
 , mkPiece, mkBoard
 , getAllBoardPieces, getBoardPieceByPos, getBoardPieceByCoord
 , getBoardPieceByPiece
 , getPieceCoord
 , removePiece, removePieceByPos
-, movePiece
+, movePiece, movePiece'
 , flipColor
 , coordEq
 ) where
@@ -29,8 +29,12 @@ coordToPos (x, y) = (cX, y)
    where cX = C.chr (C.ord 'A' + x - 1)
 
 
+
 boardToMatrix :: Board -> M.Matrix String
-boardToMatrix b =
+boardToMatrix b = displayBoardByColor b White
+
+displayBoardByColor :: Board -> Color -> M.Matrix String
+displayBoardByColor b c =
    let m = newMatrix 8 8 " "
        setFromPieces m [] = m
        setFromPieces m (x:xs) =
@@ -42,7 +46,9 @@ boardToMatrix b =
                          else show piece
              newM = M.setElem pieceChar (y_,x_) m
          in setFromPieces newM xs
-   in setFromPieces m $ getAllBoardPieces b
+   in let ret1 = setFromPieces m $ getAllBoardPieces b
+          ret2 = M.fromLists . reverse . M.toLists $ ret1
+      in if c == White then ret2 else ret1
 
 
 mkPiece color piece pos moved =
@@ -113,6 +119,9 @@ removePieceByPos board pos =
    let piece = getBoardPieceByPos board pos
    in piece >>= removePiece board
 
+
+movePiece' :: Board -> Position -> BoardPiece -> ChessRet Board
+movePiece' b newPos piece = movePiece b piece newPos
 
 --no checks for valid moves
 movePiece :: Board -> BoardPiece -> Position -> ChessRet Board

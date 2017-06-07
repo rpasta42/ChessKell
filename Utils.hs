@@ -5,6 +5,7 @@ module Utils
 , extractRight, isRight
 , listSingletonExtract
 , listFilterLeft
+, pairToList
 , pairEitherToEitherPair
 , matrixToDisplay, displayMatrix
 ) where
@@ -81,6 +82,8 @@ listFilterLeft lst = helper' lst []
          helper' ((Right x):xs) acc = helper' xs (x:acc)
          helper' (_:xs) acc = helper' xs acc
 
+pairToList :: (a, a) -> [a]
+pairToList (a, b) = [a,b]
 
 newMatrix width height elem = M.matrix width height (\_ -> elem)
 

@@ -28,11 +28,30 @@ gameLoop board whosTurn = do
    if isRight newBoard'
    then let newBoard = extractRight newBoard'
             nextTurn = flipColor whosTurn
-        in do print $ displayBoardByColor newBoard nextTurn
+        in do putStrLn "board after move:"
+              print $ displayBoardByColor newBoard nextTurn
+              putStrLn $ "\n\n================" ++ (show nextTurn) ++ "'s Turn\n"
+              print $ displayBoardByColor newBoard nextTurn
               gameLoop newBoard nextTurn
    else let (Left moveError) = newBoard'
-        in do print moveError
-              return ()
+        in --do print moveError
+           case moveError of
+               IsStaleMate ->
+                  do putStrLn "StaleMate"
+                     return ()
+               IsCheckMate winner ->
+                  do putStrLn $ "CheckMate! " ++ (show winner) ++ " wins"
+                     return ()
+               IsInvalidMove s ->
+                  do putStrLn $ "Invalid move! (" ++ s ++ ")"
+                     gameLoop board whosTurn
+               IsPieceNotFound s ->
+                  do putStrLn $ "Cannot find starting piece: " ++ s
+                     gameLoop board whosTurn
+               IsOtherFailure s ->
+                  do putStrLn $ "Unknown error occured: " ++ s
+                     gameLoop board whosTurn
+
 
 gameDriver = do
    board <- return newGame
@@ -55,7 +74,6 @@ strToMove s =
             in (C.toUpper $ head x, C.digitToInt $ head y)
 
 type Move = (Position, Position)
-type PieceMoves = (BoardPiece, [Coord], [Coord])
 
 --IsCheckMate has winner color
 data StepFailure = IsStaleMate | IsCheckMate Color | IsInvalidMove String
@@ -69,13 +87,16 @@ step board color (from, to) =
        toCoord = posToCoord to
        piece' = getBoardPieceByPos board from
        pColor' = getColor <$> piece'
-       pieceMoves' = (L.concat . pairToList) <$> (piece' >>= getPieceMoves board)
-       newBoard' = piece' >>= movePiece' board to
+       pieceMoves1' = piece' >>= getPieceMoves board
+       pieceMoves' = (L.concat . pairToList . (\(a, b, c) -> (b, c))) <$> pieceMoves1'
+       newBoard' = do pieceMoves1 <- pieceMoves1'
+                      piece <- piece'
+                      movePiece' board to pieceMoves1 piece
        isUnderCheck2' = newBoard' >>= isUnderCheck color
    in case (piece', pColor', pieceMoves', newBoard', isUnderCheck2', isUnderCheck1') of
       ((Left s), _, _, _, _, _)                 -> Left . IsPieceNotFound $ "empty square selected: " ++ s
       (_, (Right pColor), _, _, _, _)
-         | pColor /= color                      -> Left $ IsInvalidMove "wrong color move"
+         | pColor /= color                      -> Left $ IsInvalidMove "wrong color peice"
       (_, _, (Left s), _, _, _)                 -> Left . IsOtherFailure $ "getPieceMoves failed: " ++ s
       (_, _, (Right pieceMoves), _, _, _)
          | not $ toCoord `elem` pieceMoves      -> Left $ IsInvalidMove "cannot perform that move"
@@ -85,8 +106,9 @@ step board color (from, to) =
       --(_, _, _, _, Right True, _)               -> Left $ IsInvalidMove "moves puts player under check" ++ s
       (Right piece, Right pColor, Right pieceMoves, Right newBoard, Right isUnderCheck2, Right isUnderCheck1) ->
          let allMoves = getPossibleMoves board color
-             allNewBoards' = map (\(bPiece, caps, moves) -> (map (\x -> movePiece board bPiece $ coordToPos x) caps)
-                                                         ++ (map (\x -> movePiece board bPiece $ coordToPos x) moves))
+             allNewBoards' = map (\pMoves@(bPiece, caps, moves)
+                                    ->    (map (\x -> movePiece board bPiece pMoves $ coordToPos x) caps)
+                                       ++ (map (\x -> movePiece board bPiece pMoves $ coordToPos x) moves))
                                  allMoves
              allNewBoards = listFilterLeft $ concat allNewBoards'
              allUnderCheck = all (\testBoard -> extractRight $ isUnderCheck color testBoard) allNewBoards
@@ -106,7 +128,7 @@ getPossibleMoves' :: Board -> [BoardPiece] -> [ChessRet PieceMoves] -> [ChessRet
 getPossibleMoves' b [] acc = acc
 getPossibleMoves' b bPieces@(x:xs) acc =
    let pieceMoves1 = getPieceMoves b x
-       pieceMoves2 = (\ (caps, moves) -> (x, caps, moves)) <$> pieceMoves1
+       pieceMoves2 = pieceMoves1 --(\ (caps, moves) -> (x, caps, moves)) <$> pieceMoves1
    in getPossibleMoves' b xs (pieceMoves2 : acc)
 
 
@@ -141,8 +163,8 @@ isUnderCheck colorToCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=
        wKingCoord = getPieceCoord <$> wKing
        bKingCoord = getPieceCoord <$> bKing
 
-       wCaps = concat . listFilterLeft $ map (\x -> fst <$> getPieceMoves board x) wPieces
-       bCaps = concat . listFilterLeft $ map (\x -> fst <$> getPieceMoves board x) bPieces
+       wCaps = concat . listFilterLeft $ map (\x -> (\(a,b,c) -> b) <$> getPieceMoves board x) wPieces
+       bCaps = concat . listFilterLeft $ map (\x -> (\(a,b,c) -> b) <$> getPieceMoves board x) bPieces
 
        wUnderCheck = elem' bCaps <$> wKingCoord
        bUnderCheck = elem' wCaps <$> bKingCoord
@@ -242,7 +264,7 @@ getPieceCaptures b moves bPiece@(BoardPiece {getColor=color})  = Right getMoves 
 
 
 --does not account for putting king under check
-getPieceMoves :: Board -> BoardPiece -> ChessRet ([Coord], [Coord])
+getPieceMoves :: Board -> BoardPiece -> ChessRet PieceMoves --([Coord], [Coord])
 getPieceMoves board bPiece =
    let pPiece = getPiece bPiece
        pCoord = getPieceCoord bPiece
@@ -252,7 +274,7 @@ getPieceMoves board bPiece =
        pieceMoves4 = pieceMoves3 --map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
        pieceMoves5 = pieceMoves4 --map (filter (not . isIllegalJump board bPiece)) pieceMoves4
    in do capsAndMoves@(captures, moves) <- getPieceCaptures board pieceMoves5 bPiece
-         return capsAndMoves
+         return (bPiece, captures, moves) --capsAndMoves
          --if length captures == 0 && length moves == 0
          --then Left "no moves"
          --else return capsAndMoves
@@ -379,6 +401,7 @@ x4 = x3 >>= getPieceMoves x1
 
 
 --test2:
+{-
 test2 =
    let board = newGame
        wPieces = getWhitePieces board
@@ -413,7 +436,7 @@ test2 =
 
    in  helper pieceMoveCombos3
 
-
+-}
 
 --main = test2
 main = do

@@ -138,13 +138,16 @@ removePieceByPos board pos =
    in piece >>= removePiece board
 
 
-movePiece' :: Board -> Position -> BoardPiece -> ChessRet Board
-movePiece' b newPos piece = movePiece b piece newPos
+movePiece' :: Board -> Position -> PieceMoves
+           -> BoardPiece -> ChessRet Board
+movePiece' b newPos pMoves piece = movePiece b piece pMoves newPos
 
 --no checks for valid moves
-movePiece :: Board -> BoardPiece -> Position -> ChessRet Board
+movePiece :: Board -> BoardPiece -> PieceMoves
+          -> Position -> ChessRet Board
 movePiece board
           piece@(BoardPiece {getPiece=p, getColor=c})
+          pMoves
           newPos =
    let newPiece = mkPiece c p newPos True
        wPieces = getWhitePieces board

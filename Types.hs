@@ -7,6 +7,7 @@ module Types
 , Coord
 , BoardPiece(..)
 , Board(Board, getWhitePieces, getBlackPieces)
+, PieceMoves
 ) where
 
 type Position = (Char, Int)
@@ -95,4 +96,4 @@ data Board = Board { getWhitePieces :: [BoardPiece]
                    , getBlackPieces :: [BoardPiece]
                    } deriving (Show)
 
-
+type PieceMoves = (BoardPiece, [Coord], [Coord])

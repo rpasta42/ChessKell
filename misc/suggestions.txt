@@ -1,0 +1,38 @@
+[19:07] <ski> rpasta42 : generally, it's better to put informative messages to the user in the user interface, as the last step. that way, if it turns out you need to, or it's convenient, you can pattern-match on the errors and interpret them programmatically much easier
+
+[19:06] <thang1> What they're probably getting at is that your error types should be strong enough to be able to say those things without needing String. Something like "isInvalidMove Reason" would likely be an improvement.
+
+[19:08] <ski> rpasta42 : i also think you should be able to replace that `case' with `do' on the `Either StepFailure' monad
+
+[19:09] <ski> perhaps using a `mapLeft' operator, to wrap error messages of different types up into a common type (`StepFailure')
+
+[19:07] <ski> rpasta42 : generally, it's better to put informative messages to the user in the user interface, as the last step. that way, if it turns out you need to, or it's convenient, you can pattern-match on the errors and interpret them programmatically much easier
+[19:07] <rpasta42> thang1: haha, I played around with nix few years ago when I was in high-school
+[19:08] <ski> rpasta42 : i also think you should be able to replace that `case' with `do' on the `Either StepFailure' monad
+
+
+19:10] <ski> basically, you need something of type `(e0 -> e1) -> (Either e0 a -> Either e1 a)'. should be easy to define, if it's not available easily
+[19:10] <Tuplanolla> :t lmap :: (a -> b) -> Either a c -> Either b c -> -- Isn't it this, ski?
+[19:10] <lambdabot> error:
+[19:10] <lambdabot>     parse error (possibly incorrect indentation or mismatched brackets)
+[19:10] <Tuplanolla> :t lmap :: (a -> b) -> Either a c -> Either b c
+[19:10] <lambdabot> error:
+[19:10] <lambdabot>     • Couldn't match type ‘b1’ with ‘a1’
+[19:10] <lambdabot>       ‘b1’ is a rigid type variable bound by
+
+[19:10] <Tuplanolla> :t lmap :: (a -> b) -> Either a c -> Either b c -> -- Isn't it this, ski?
+[19:10] <lambdabot> error:
+[19:10] <lambdabot>     parse error (possibly incorrect indentation or mismatched brackets)
+[19:10] <Tuplanolla> :t lmap :: (a -> b) -> Either a c -> Either b c
+
+
+[19:11] <Tuplanolla> Oh, no. That one's contravariant.
+
+[19:15] <ski> rpasta42 : there's also `mapExceptT :: (m (Either e0 a) -> n (Either e1 b)) -> (ExceptT e0 m a -> ExceptT e1 n b)' in `Control.Monad.Except' (useful if you find yourself wanting to mix in exception handling with some other monadic effect. this is a monad transformer)
+
+rpasta42: this  might be somewhat useful for your errors (It's more focused on compilers, but eh) https://github.com/jaspervdj/talks/blob/master/2017-skillsmatter-errors/slides.md
+
+
+19:20] <thang1> rpasta42: Also. At a very high level, I prefer to separate "how to do" from "what to do". So, if I have a step function that changes the game state, I'd first attempt to create it as a fairly high level function. Something like step = <ensure valid state> <do move> <return
+modified board>. I don't see a ton of need to completely inline that as a massive nested let when you have where clauses to do that for you
+

@@ -9,8 +9,6 @@ import System.IO
 import System.Posix.Unistd (sleep)
 import Debug.Trace
 
-
-
 --step newGame White (extractRight $ strToMove "a2,a4")
 
 getPlayerMove = do

@@ -1,4 +1,6 @@
 --cabal install matrix
+--cabal install either
+
 
 import Types
 import Utils
@@ -7,6 +9,7 @@ import qualified Data.List as L
 import qualified Data.Char as C
 import System.IO
 import System.Posix.Unistd (sleep)
+import Data.Either.Combinators (mapLeft)
 import Debug.Trace
 
 --step newGame White (extractRight $ strToMove "a2,a4")
@@ -79,6 +82,81 @@ data StepFailure = IsStaleMate | IsCheckMate Color | IsInvalidMove String
                      deriving (Show)
 
 
+
+step :: Board -> Color -> Move -> Either StepFailure Board
+step board color (from, to) =
+   do let nextColor = flipColor color
+          toCoord = posToCoord to
+
+      piece <- mapLeft (\errStr -> IsPieceNotFound $ "empty square selected: " ++ errStr)
+                       (getBoardPieceByPos board from)
+
+      let pColor' = getColor piece
+      pColor <- if pColor' /= color
+                then Left $ IsInvalidMove "wrong color piece"
+                else Right pColor'
+
+
+      pieceMoves1 <- mapLeft (\errStr -> IsOtherFailure $ "getPieceMoves failed: " ++ errStr)
+                             $ getPieceMoves board piece
+
+      let pieceMoves = L.concat . pairToList . (\(a, b, c) -> (b,c)) $ pieceMoves1
+
+      newBoard <- mapLeft (\errStr -> IsOtherFailure $ "movePiece failed: " ++ errStr)
+                          $ movePiece' board to pieceMoves1 piece
+
+      --move next to up?
+      isUnderCheckPrevMove <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckPrevMove failed: " ++ errStr)
+                                      (isUnderCheck color board)
+
+      isUnderCheckOtherColor1 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckOtherColor1 failed: " ++ errStr)
+                                         $ isUnderCheck color board
+
+      isUnderCheckNextMove <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckNextMove failed: " ++ errStr)
+                                      $ isUnderCheck color newBoard
+
+      isUnderCheckOtherColor2 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckOtherColor2 failed: " ++ errStr)
+                                         $ isUnderCheck nextColor newBoard
+
+      -----
+      let allMoves = getPossibleMoves newBoard nextColor
+          allNewBoards' = map (\pMoves@(bPiece, caps, moves)
+                                   ->    (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) caps)
+                                      ++ (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) moves))
+                              allMoves
+
+          allNewBoards = listFilterLeft $ concat allNewBoards'
+
+          allNewBoardsCheckLst = map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard)
+                                     allNewBoards
+
+          allUnderCheck' = all (\x -> x) allNewBoardsCheckLst
+
+          allUnderCheck = trace ((show allNewBoardsCheckLst) ++ ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves)))
+                                $ allUnderCheck'
+
+          isCheckMate' = allUnderCheck' && isUnderCheckOtherColor2
+
+          isCheckMate = if isUnderCheckPrevMove then
+                              trace ((show color) ++ " is under check!!")
+                                    isCheckMate'
+                        else isCheckMate'
+          --isStaleMate = length allMoves == 0
+
+          --isStaleMate = filter ((/=) True)
+          --                     (map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard))-}
+
+          isStaleMate = allUnderCheck'
+
+      case (isCheckMate, isStaleMate, isUnderCheckNextMove, isUnderCheckPrevMove) of
+            (True, _, _, _)      -> Left $ IsCheckMate color
+            (_, True, _, _)      -> Left IsStaleMate
+            (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"
+            (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
+
+            _ -> Right newBoard
+
+{-
 step :: Board -> Color -> Move -> Either StepFailure Board
 step board color (from, to) =
    let nextColor = flipColor color
@@ -133,8 +211,9 @@ step board color (from, to) =
                                        isCheckMate'
                            else isCheckMate'
              --isStaleMate = length allMoves == 0
-             {-isStaleMate = filter ((/=) True)
-                                  (map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard))-}
+
+             --isStaleMate = filter ((/=) True)
+             --                     (map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard))
 
              isStaleMate = allUnderCheck'
 
@@ -145,6 +224,7 @@ step board color (from, to) =
                (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
 
                _ -> Right newBoard
+-}
 
 
 getPossibleMoves :: Board -> Color -> [PieceMoves]

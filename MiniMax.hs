@@ -1,3 +1,8 @@
+module MiniMax
+( MoveTree(MoveTreeLeaf, MoveTreeNode)
+, minimax
+) where
+
 import Utils
 
 --a is Board
@@ -18,6 +23,7 @@ getMoveTreeBoard (MoveTreeNode b _) = b
       foldr f (f (getMoveTreeBoard x) acc) (MoveTreeNode board xs)
 -}
 
+
 --a is Board, b is heuristic return
 minimax :: (Ord b) => Int -> (a -> b) -> MoveTree a -> Bool -> Maybe b
 --minimax check tree depth isMaxi = 0
@@ -34,6 +40,4 @@ minimax depth checkScore (MoveTreeNode board rest) isMaxi
             (Nothing, _)            -> acc
             (_, Nothing)            -> v
             (Just v', Just acc')    -> Just $ foldAccFunc acc' v'
-
-
 

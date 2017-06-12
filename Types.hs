@@ -94,10 +94,12 @@ data BoardPiece = BoardPiece { getPiece :: Piece
 
 data Board = Board { getWhitePieces :: [BoardPiece]
                    , getBlackPieces :: [BoardPiece]
-                   , getLastMove :: Maybe
+                   , getLastMove :: Maybe Move
                    } deriving (Show)
 
 type PieceMoves = (BoardPiece, [Coord], [Coord])
-type Move = Move (Position, Position) | Castle Bool | EnPassant
+data Move = Move (Position, Position) | Castle Bool | EnPassant
+               deriving (Show)
+
 
 

@@ -2,15 +2,28 @@ import Utils
 
 --a is Board
 
-data Tree a = NodeTerminal a | NodeSubtree a [Tree a]
+data MoveTree a = MoveTreeLeaf a | MoveTreeNode a [MoveTree a]
    deriving (Show)
 
+getMoveTreeBoard (MoveTreeLeaf b) = b
+getMoveTreeBoard (MoveTreeNode b _) = b
+
+instance Foldable MoveTree where
+   --foldMap f (MoveTreeLeaf board) = f board
+   --foldMap f (MoveTreeNode trees) = map (foldMap f) trees
+   foldr f acc (MoveTreeLeaf board) = f board acc
+   foldr f acc (MoveTreeNode board []) = acc
+
+   foldr f acc (MoveTreeNode board boards@(x:xs)) =
+      foldr f (f (getMoveTreeBoard x) acc) (MoveTreeNode board xs)
+
+
 --a is Board, b is heuristic return
-minimax :: (Num b) => Int -> (a -> b) -> Tree a -> Bool -> Maybe b
+minimax :: (Ord b) => Int -> (a -> b) -> MoveTree a -> Bool -> Maybe b
 --minimax check tree depth isMaxi = 0
-minimax depth checkScore (NodeTerminal board) _ = checkScore board
-minimax depth checkScore (NodeSubtree board rest) isMaxi
-   | depth == 0 = check board
+minimax depth checkScore (MoveTreeLeaf board) _ = checkScore board
+minimax depth checkScore (MoveTreeNode board rest) isMaxi
+   | depth == 0 = checkScore board
    | otherwise  =
       foldl (\ currBoard acc ->
                let v = extractJust $ minimax (depth - 1) checkScore currBoard newIsMaxi
@@ -20,27 +33,8 @@ minimax depth checkScore (NodeSubtree board rest) isMaxi
                        in Just $ foldAccFunc accVal v)
             Nothing
             rest
-      where foldAccFunc = if isMaxi then max else min
-            newIsMaxi = not isMaxi
-
-      {-if isMaxi then
-         foldl (\subx acc ->
-                  let v = extractJust $ minimax (depth - 1) check subx False
-                  in if not $ isJust acc
-                     then Just v
-                     else let acc' = extractJust acc
-                          in if v > acc' then Just v else Just acc')
-               Nothing
-               rest
-      else
-         foldl (\subx acc ->
-                  let v = extractJust $ minimax (depth - 1) subx True
-                  in if not $ isJust acc
-                     then Just v
-                     else let acc' = extractJust acc
-                          in if v < acc' then Just v else Just acc')
-               Nothing
-               rest-}
+         where foldAccFunc = if isMaxi then max else min
+               newIsMaxi = not isMaxi
 
 
 

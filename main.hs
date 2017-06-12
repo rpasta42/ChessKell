@@ -74,7 +74,6 @@ strToMove s =
             let (x, y) = splitAt 1 s
             in (C.toUpper $ head x, C.digitToInt $ head y)
 
-type Move = (Position, Position)
 
 --IsCheckMate has winner color
 data StepFailure = IsStaleMate | IsCheckMate Color | IsInvalidMove String

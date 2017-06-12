@@ -44,8 +44,6 @@ newGameBoard =
    in board2
 
 
-boardToMatrix :: Board -> M.Matrix String
-boardToMatrix b = displayBoardByColor b White
 
 displayBoardByColor :: Board -> Color -> M.Matrix String
 displayBoardByColor b c =
@@ -84,7 +82,6 @@ mkBoard whitePieces blackPieces =
          , getBlackPieces=blackPieces
          }
 
-mkBoardFromPair (wPieces, bPieces) = mkBoard wPieces bPieces
 
 --getAllBoardPieces/getBoardPieceByPos/getBoardPieceByCoord/GetBoardPieceByPiece
 
@@ -115,10 +112,6 @@ getBoardPieceByPiece pieces piece =
          pieces
 
 
-
-getPieceCoord :: BoardPiece -> Coord
-getPieceCoord p = posToCoord $ getPosition p
-
 ---removePiece/removePieceByPos
 
 removePiece :: Board -> BoardPiece -> ChessRet Board
@@ -136,6 +129,7 @@ removePieceByPos :: Board -> Position -> ChessRet Board
 removePieceByPos board pos =
    let piece = getBoardPieceByPos board pos
    in piece >>= removePiece board
+
 
 
 movePiece' :: Board -> Position -> PieceMoves
@@ -188,4 +182,11 @@ flipColor Black = White
 
 coordEq a b = a == b
 
+getPieceCoord :: BoardPiece -> Coord
+getPieceCoord p = posToCoord $ getPosition p
+
+boardToMatrix :: Board -> M.Matrix String
+boardToMatrix b = displayBoardByColor b White
+
+mkBoardFromPair (wPieces, bPieces) = mkBoard wPieces bPieces
 

@@ -5,6 +5,7 @@
 import Types
 import Utils
 import ChessUtils
+import Logic
 import qualified Data.List as L
 import qualified Data.Char as C
 import System.IO
@@ -24,7 +25,7 @@ gameLoop board whosTurn = do
    moveStr <- getPlayerMove
 
    let move = extractRight . strToMove $ moveStr
-       newBoard' = step Nothing board whosTurn move
+       newBoard' = step board Nothing whosTurn move
 
    if isRight newBoard'
    then let newBoard = extractRight newBoard'
@@ -68,11 +69,12 @@ strToMove :: String -> ChessRet Move
 strToMove s =
    let splitted@(part1, part2) = splitAt 2 s
        (fromStr, toStr) = (part1, tail part2)
-   in Right $ (strToPos fromStr, strToPos toStr)
+   in Right $ Move (strToPos fromStr, strToPos toStr)
       where
          strToPos s =
             let (x, y) = splitAt 1 s
-            in (C.toUpper $ head x, C.digitToInt $ head y)
+                pos = (C.toUpper $ head x, C.digitToInt $ head y)
+            in pos
 
 
 --IsCheckMate has winner color
@@ -82,9 +84,8 @@ data StepFailure = IsStaleMate | IsCheckMate Color | IsInvalidMove String
                      deriving (Show)
 
 
-
 step :: Board -> Maybe Piece -> Color -> Move -> Either StepFailure Board
-step board pawnPromo color (from, to) =
+step board pawnPromo color (Move (from, to)) =
    do let nextColor = flipColor color
           toCoord = posToCoord to
 
@@ -159,6 +160,7 @@ step board pawnPromo color (from, to) =
 --misc Utils/tools:
 
 removePieceByPos' = flip removePieceByPos
+elem' :: (Eq a, Foldable t) => t a -> a -> Bool
 elem' = flip L.elem
 
 

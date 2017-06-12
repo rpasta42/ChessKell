@@ -5,8 +5,7 @@ module Logic
 , getPieceCaptures
 , getPieceMoves
 , isMoveOnBoard
-,
-
+) where
 
 import Types
 import Utils

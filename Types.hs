@@ -8,6 +8,7 @@ module Types
 , BoardPiece(..)
 , Board(Board, getWhitePieces, getBlackPieces)
 , PieceMoves
+, Move(..)
 ) where
 
 type Position = (Char, Int)
@@ -98,7 +99,8 @@ data Board = Board { getWhitePieces :: [BoardPiece]
                    } deriving (Show)
 
 type PieceMoves = (BoardPiece, [Coord], [Coord])
-data Move = Move (Position, Position) | Castle Bool | EnPassant
+
+data Move = Move (Position, Position) | Castle Bool | EnPassant (BoardPiece, BoardPiece)
                deriving (Show)
 
 

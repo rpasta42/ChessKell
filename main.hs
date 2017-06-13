@@ -84,7 +84,8 @@ data StepFailure = IsStaleMate | IsCheckMate Color | IsInvalidMove String
                  | NeedPawnPromotion
                      deriving (Show)
 
-
+--current player color = p1, other player = p2
+--current board: currMove, board after move: nextMove
 step :: Board -> Maybe Piece -> Color -> Move -> Either StepFailure Board
 step board pawnPromo color (Move (from, to)) =
    do let nextColor = flipColor color
@@ -107,54 +108,46 @@ step board pawnPromo color (Move (from, to)) =
                           $ movePiece' board to pieceMoves1 piece
 
       --move next to up?
-      isUnderCheckPrevMove <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckPrevMove failed: " ++ errStr)
-                                      (isUnderCheck color board)
+      checkCurrMoveP1 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckPrevMove failed: " ++ errStr)
+                                 (isUnderCheck color board)
 
-      isUnderCheckOtherColor1 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckOtherColor1 failed: " ++ errStr)
-                                         $ isUnderCheck color board
+      checkCurrMoveP2 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckOtherColor1 failed: " ++ errStr)
+                                 $ isUnderCheck color board
 
-      isUnderCheckNextMove <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckNextMove failed: " ++ errStr)
-                                      $ isUnderCheck color newBoard
+      checkNextMoveP1 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckNextMove failed: " ++ errStr)
+                                 $ isUnderCheck color newBoard
 
-      isUnderCheckOtherColor2 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckOtherColor2 failed: " ++ errStr)
-                                         $ isUnderCheck nextColor newBoard
+      checkNextMoveP2 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckOtherColor2 failed: " ++ errStr)
+                                 $ isUnderCheck nextColor newBoard
 
       -----
-      let {-allMoves = getPossibleMoves newBoard nextColor
-          allNewBoards' = map (\pMoves@(bPiece, caps, moves)
-                                   ->    (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) caps)
-                                      ++ (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) moves))
-                              allMoves
-
-          allNewBoardsOld = listFilterLeft $ concat allNewBoards' -}
-          allNewBoards = genPossibleMoveBoards newBoard nextColor
+      let allNewBoards = genPossibleMoveBoards newBoard nextColor
 
           allNewBoardsCheckLst = map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard)
                                      allNewBoards
 
-          allUnderCheck' = all (\x -> x) allNewBoardsCheckLst
+          allUnderCheck1 = all (\x -> x) allNewBoardsCheckLst
+          allUnderCheck2 = trace (show allNewBoardsCheckLst) $ allUnderCheck1
+          allUnderCheck = allUnderCheck1 --replace with allUnderCheck2 for debug info
 
-          --allUnderCheck = trace ((show allNewBoardsCheckLst) ++ ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves)))
-          --                      $ allUnderCheck'
-          allUnderCheck = allUnderCheck'
 
-          isCheckMate' = allUnderCheck' && isUnderCheckOtherColor2
+          isCheckMate' = allUnderCheck && checkNextMoveP2
 
-          isCheckMate = if isUnderCheckPrevMove then
+          isCheckMate = if checkCurrMoveP2 then
                               trace ((show color) ++ " is under check!!")
                                     isCheckMate'
                         else isCheckMate'
-          --isStaleMate = length allMoves == 0
 
+          --isStaleMate = length allMoves == 0
           --isStaleMate = filter ((/=) True)
           --                     (map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard))
 
-          --new
-          isStaleMate = allUnderCheck'
+          isStaleMate = allUnderCheck
 
+          --new
           (maybeWinner, isStaleMate1) = getMatesAndStales board (flipColor color)
 
-      case (isCheckMate, isStaleMate, isUnderCheckNextMove, isUnderCheckPrevMove) of
+      case (isCheckMate, isStaleMate, checkNextMoveP1, checkCurrMoveP1) of
             (True, _, _, _)      -> Left $ IsCheckMate color
             (_, True, _, _)      -> Left IsStaleMate
             (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"

@@ -66,7 +66,11 @@ getMoveBoards' board moves =
 
 genPossibleMoveBoards :: Board -> Color -> [Board]
 genPossibleMoveBoards board color =
-   let allMoves = getPossibleMoves board color
+   let allMoves1 = getPossibleMoves board color
+       allMoves2 = trace ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves1))
+                         $ allMoves1
+       allMoves = allMoves1 --change this to allMoves2 for debug
+
        boards1 = getMoveBoards' board allMoves
        boards2 = listFilterLeft $ concat boards1
    in boards2

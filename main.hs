@@ -74,7 +74,7 @@ gameDriver = do
 --START BOT GAME
 
 getPlayerMoveBot board whosTurn =
-   fst . extractJust $ getAiMove board whosTurn 5
+   fst . extractJust $ getAiMove board whosTurn 3
 
 gameLoopBot board whosTurn = do
    let move = getPlayerMoveBot board whosTurn

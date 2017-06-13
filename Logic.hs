@@ -93,12 +93,21 @@ getMatesAndStales board color =
        --helpers
        getCheckLst color testBoard = extractRight $ isUnderCheck color testBoard
 
+       isCheckMate1 = not underCheckNow && allUnderCheck
+
+       isCheckMate2 =
+         if underCheckNow
+         then trace ((show color) ++ " is under check!")
+                    $ isCheckMate1
+         else isCheckMate1
+
+       isCheckMate = isCheckMate2
+
    in if underCheckNow && allUnderCheck
       then (Just $ flipColor color, False)
-      else if (not underCheckNow && allUnderCheck)
+      else if isCheckMate
            then (Nothing, True)
            else (Nothing, False)
-
 
 
 isUnderCheck :: Color -> Board -> ChessRet Bool
@@ -118,7 +127,6 @@ isUnderCheck colorToCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=
    in case colorToCheck of
          White -> wUnderCheck
          Black -> bUnderCheck
-
 
 
 {-getPieceCaptures :: Board -> [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])

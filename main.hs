@@ -120,47 +120,15 @@ step board pawnPromo color (Move (from, to)) =
       checkNextMoveP2 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckOtherColor2 failed: " ++ errStr)
                                  $ isUnderCheck nextColor newBoard
 
-      -----
-      let allNewBoards = genPossibleMoveBoards newBoard nextColor
+      let  (maybeWinner, isStaleMate) = getMatesAndStales newBoard nextColor
 
-          allNewBoardsCheckLst = map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard)
-                                     allNewBoards
-
-          allUnderCheck1 = all (\x -> x) allNewBoardsCheckLst
-          allUnderCheck2 = trace (show allNewBoardsCheckLst) $ allUnderCheck1
-          allUnderCheck = allUnderCheck1 --replace with allUnderCheck2 for debug info
-
-
-          isCheckMate' = allUnderCheck && checkNextMoveP2
-
-          isCheckMate = if checkCurrMoveP2 then
-                              trace ((show color) ++ " is under check!!")
-                                    isCheckMate'
-                        else isCheckMate'
-
-          --isStaleMate = length allMoves == 0
-          --isStaleMate = filter ((/=) True)
-          --                     (map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard))
-
-          isStaleMate = allUnderCheck
-
-          --new
-          (maybeWinner, isStaleMate1) = getMatesAndStales board (flipColor color)
-
-      case (isCheckMate, isStaleMate, checkNextMoveP1, checkCurrMoveP1) of
-            (True, _, _, _)      -> Left $ IsCheckMate color
-            (_, True, _, _)      -> Left IsStaleMate
-            (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"
-            (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
-            _ -> Right newBoard
-
-      {-case (maybeWinner, isStaleMate1, isUnderCheckNextMove, isUnderCheckPrevMove) of
+      case (maybeWinner, isStaleMate, checkNextMoveP1, checkCurrMoveP1) of
             (Just c, _, _, _)    -> Left $ IsCheckMate c
             (_, True, _, _)      -> Left IsStaleMate
             (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"
             (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
 
-            _ -> Right newBoard-}
+            _ -> Right newBoard
 
 
 {-

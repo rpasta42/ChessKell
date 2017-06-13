@@ -96,13 +96,13 @@ gameLoopBot board whosTurn = do
                      return ()
                IsInvalidMove s ->
                   do putStrLn $ "Invalid move! (" ++ s ++ ")"
-                     gameLoopBot board whosTurn
+                     return () --gameLoopBot board whosTurn
                IsPieceNotFound s ->
                   do putStrLn $ "Cannot find starting piece: " ++ s
-                     gameLoopBot board whosTurn
+                     return () --gameLoopBot board whosTurn
                IsOtherFailure s ->
                   do putStrLn $ "Unknown error occured: " ++ s
-                     gameLoopBot board whosTurn
+                     return () --gameLoopBot board whosTurn
 
 gameDriverBot = do
    board <- return newGame

@@ -105,6 +105,10 @@ gameLoopBot board whosTurn = do
                      return () --gameLoopBot board whosTurn
 
 gameDriverBot = do
+   putStrLn "usermove=1"
+   putStrLn "go"
+   putStrLn "new"
+
    board <- return newGame
    game <- gameLoopBot board White
    return ()

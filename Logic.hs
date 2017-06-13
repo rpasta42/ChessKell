@@ -71,6 +71,55 @@ isUnderCheck colorToCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=
          White -> wUnderCheck
          Black -> bUnderCheck
 
+
+--nextToMoveColor -- color to check for checkmate
+--Maybe winner, Maybe isStalemate
+getMatesAndStales :: Board -> Color -> (Maybe Color, Maybe Bool)
+getMatesAndStales board nextToMoveColor =
+   let bUnderCheck = isUnderCheck Black board --current board
+       wUnderCheck = isUnderCheck White board --current board
+
+       allMovesB = getPossibleMoves board Black
+       allMovesW = getPossibleMoves board White
+
+       boardsB1 = getMoveBoards allMovesB
+       boardsW1 = getMoveBoards allMovesW
+
+       boardsB2 = listFilterLeft $ concat boardsB1
+       boardsW2 = listFilterLeft $ concat boardsW1
+
+       --TODO:
+       underCheckB = map (getCheckLst nextToMoveColor) boardsB2 --next to move color or B/W???
+       underCheckA = map (getCheckLst nextToMoveColor) boardsW2 --next to move color or B/w???
+
+       allUnderCheckB = all id underCheckB --next move
+       allUnderCheckW = all id underCheckA --next move
+
+       (underCheckNextPlayer, allUnderCheckNextPlayer) =
+            if nextToMoveColor == White
+            then (wUnderCheck, allUnderCheckW)
+            else (bUnderCheck, allUnderCheckB)
+
+   in if underCheckNextPlayer && allUnderCheckNextPlayer
+      then (Just $ flipColor nextToMoveColor, Nothing)
+      else if (not underCheckNextPlayer && allUnderCheckNextPlayer)
+           then (Nothing, Just True)
+           else (Nothing, Nothing)
+
+
+      where
+          --helpers
+
+          getCheckLst color testBoard = extractRight $ isUnderCheck testBoard
+
+          getMoveBoards moves =
+            map (\pMoves@(bPiece, caps, moves)
+                  ->    (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) caps)
+                     ++ (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) moves))
+                moves
+
+
+
 {-getPieceCaptures :: Board -> [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
 --takes board and bPiece and returns a pair:
 --fst: with list of all pieces it can capture, and
@@ -159,6 +208,8 @@ getPieceCaptures b moves bPiece@(BoardPiece {getColor=color})  = Right getMoves 
       let allCapts = concat $ map (\(_, caps, moves) -> caps) getMoves'
           allMoves = concat $ map (\(_, caps, moves) -> moves) getMoves'
        in (allCapts, allMoves)
+
+
 
 
 --does not account for putting king under check

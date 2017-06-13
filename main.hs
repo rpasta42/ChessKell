@@ -6,6 +6,7 @@ import Types
 import Utils
 import ChessUtils
 import Logic
+import Ai
 import qualified Data.List as L
 import qualified Data.Char as C
 import System.IO

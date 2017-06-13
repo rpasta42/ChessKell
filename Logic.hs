@@ -1,11 +1,11 @@
 module Logic
 ( getPossibleMoves
 , newGame
-, genPossibleMoveBoards
+, genPossibleMoveBoards, genPossibleMoveBoards2
 , getMatesAndStales
 , isUnderCheck
 , getPieceCaptures
-, getPieceMoves
+, getPieceMoves, getPieceMoves' --' for testing
 , isMoveOnBoard
 ) where
 
@@ -62,6 +62,32 @@ getMoveBoards' board moves =
             ++ (map (mvPiece board bPiece pMoves) moves))
        moves
       where mvPiece b bPiece pMoves coord = movePiece b bPiece pMoves $ coordToPos coord
+
+
+
+genPossibleMoveBoards2 :: Board -> Color -> [(Move, Board)]
+genPossibleMoveBoards2 board color =
+   let allMoves1 = getPossibleMoves board color
+       allMoves2 = trace ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves1))
+                         $ allMoves1
+
+       allMoves = allMoves1 --change this to allMoves2 for debug
+
+       boards1 = getMoveBoards' board allMoves
+
+       boards2 = zip boards1 allMoves
+
+       boards3 = map (\ (boards, pMoves) -> zip (pieceMovesToMoves pMoves) boards)
+                     boards2
+
+       boards4 = map (\ (pos, eitherBoard) ->
+                           if isRight eitherBoard
+                           then Right $ (pos, extractRight eitherBoard)
+                           else Left "empty board")
+                     (concat boards3)
+
+       boards5 = listFilterLeft boards4
+   in boards5
 
 
 genPossibleMoveBoards :: Board -> Color -> [Board]

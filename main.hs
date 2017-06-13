@@ -1,7 +1,6 @@
 --cabal install matrix
 --cabal install either
 
-
 import Types
 import Utils
 import ChessUtils
@@ -24,6 +23,9 @@ getPlayerMove = do
 
 gameLoop board whosTurn = do
    moveStr <- getPlayerMove
+
+   let aiMove = getAiMove board whosTurn 5
+   aiEval <- putStrLn [(show aiMove) !! 0]
 
    let move = extractRight . strToMove $ moveStr
        newBoard' = step board Nothing whosTurn move
@@ -127,7 +129,6 @@ step board pawnPromo color (Move (from, to)) =
             (_, True, _, _)      -> Left IsStaleMate
             (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"
             (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
-
             _ -> Right newBoard
 
 
@@ -146,6 +147,10 @@ x2 = boardToMatrix x1
 
 x3 = getBoardPieceByPos x1 ('C', 1)
 x4 = x3 >>= getPieceMoves x1
+x5 = getPieceMoves' x1 <$> x3
+
+x6 = getBoardPieceByPos x1 ('C', 2)
+x7 = x6 >>= getPieceMoves x1
 
 --x5 = mkMove x1 ('C', 1) ('D', 2)
 --x6 = fmap boardToMatrix x5

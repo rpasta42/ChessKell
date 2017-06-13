@@ -1,6 +1,6 @@
 module MiniMax
 ( MoveTree(MoveTreeLeaf, MoveTreeNode)
-, minimax
+, minimax, minimax'
 ) where
 
 import Utils
@@ -24,8 +24,12 @@ getMoveTreeBoard (MoveTreeNode b _) = b
 -}
 
 
+minimax' :: (Ord b, Show b) => Int -> (a -> b) -> Bool -> MoveTree a -> Maybe b
+minimax' depth checkScore isMaxi moveTree =
+   minimax depth checkScore moveTree isMaxi
+
 --a is Board, b is heuristic return
-minimax :: (Ord b) => Int -> (a -> b) -> MoveTree a -> Bool -> Maybe b
+minimax :: (Ord b, Show b) => Int -> (a -> b) -> MoveTree a -> Bool -> Maybe b
 --minimax check tree depth isMaxi = 0
 minimax depth checkScore (MoveTreeLeaf board) _ = Just $ checkScore board
 minimax depth checkScore (MoveTreeNode board rest) isMaxi

@@ -7,6 +7,7 @@ module ChessUtils
 , getPieceCoord
 , removePiece, removePieceByPos
 , movePiece, movePiece'
+, pieceMovesToMoves
 , flipColor
 , coordEq
 ) where
@@ -137,12 +138,21 @@ movePiece' :: Board -> Position -> PieceMoves
            -> BoardPiece -> ChessRet Board
 movePiece' b newPos pMoves piece = movePiece b piece pMoves newPos
 
+isIllegalMove :: PieceMoves -> Position -> Bool
+isIllegalMove pMoves@(_, captures, moves) destPos =
+   let allCoords = captures ++ moves
+       destCoord = posToCoord destPos
+       isLegal = destCoord `elem` allCoords
+   in not isLegal
+
+
+
 --no checks for valid moves
 movePiece :: Board -> BoardPiece -> PieceMoves
           -> Position -> ChessRet Board
 movePiece board
           piece@(BoardPiece {getPiece=p, getColor=c})
-          pMoves@(_, captures, moves)
+          pMoves
           newPos =
    let newBoard = removePieceAtPos board newPos
        newPiece = mkPiece c p newPos True
@@ -150,11 +160,13 @@ movePiece board
        bPieces = getBlackPieces newBoard
        wIndex = L.elemIndex piece wPieces
        bIndex = L.elemIndex piece bPieces
-   in case (wIndex, bIndex) of
-         (Just wIndex', Nothing) ->
+       isIllegal = isIllegalMove pMoves newPos
+   in case (wIndex, bIndex, isIllegal) of
+         (_, _, True) -> Left $ "illegal move!!"
+         (Just wIndex', Nothing, _) ->
             Right $ mkBoard (replaceLstIndex wPieces wIndex' newPiece)
                             bPieces
-         (Nothing, Just bIndex') ->
+         (Nothing, Just bIndex', _) ->
             Right $ mkBoard wPieces
                             (replaceLstIndex bPieces bIndex' newPiece)
          _ -> Left $ "movePiece pattern fail: piece not found"
@@ -171,6 +183,16 @@ removePieceAtPos b pos =
          in if color == White
             then mkBoard (extractRight $ deleteLstItem wPieces piece) bPieces
             else mkBoard wPieces (extractRight $ deleteLstItem bPieces piece)
+
+
+pieceMovesToMoves :: PieceMoves -> [Move]
+pieceMovesToMoves pMoves@(bPiece, caps, moves) =
+   let pStartPos = getPosition bPiece
+       allDestCoords = caps ++ moves
+       allDestsPos = map coordToPos allDestCoords
+       allMoves = map (\x -> Move (pStartPos, x))
+                      allDestsPos
+   in allMoves
 
 
 

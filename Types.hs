@@ -98,10 +98,15 @@ data Board = Board { getWhitePieces :: [BoardPiece]
                    , getLastMove :: Maybe Move
                    } deriving (Show)
 
+
 type PieceMoves = (BoardPiece, [Coord], [Coord])
 
 data Move = Move (Position, Position) | Castle Bool | EnPassant (BoardPiece, BoardPiece)
                deriving (Show)
 
-
+{-
+data Either3 a b c = E3Left a
+                   | E3Middle b
+                   | E3Right c
+-}
 

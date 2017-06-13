@@ -15,6 +15,8 @@ import Debug.Trace
 
 --step newGame Nothing White (extractRight $ strToMove "a2,a4") Nothing
 
+--START NORMAL COMMAND LINE GAME
+
 getPlayerMove = do
    putStr "enter move: "
    line <- getLine
@@ -66,6 +68,48 @@ gameDriver = do
    game <- gameLoop board White
 
    return ()
+
+--END NORMAL COMMAND LINE GAME
+
+--START BOT GAME
+
+getPlayerMoveBot board whosTurn =
+   fst . extractJust $ getAiMove board whosTurn 2
+
+gameLoopBot board whosTurn = do
+   let move = getPlayerMoveBot board whosTurn
+       newBoard' = step board Nothing whosTurn move
+
+   if isRight newBoard'
+   then let newBoard = extractRight newBoard'
+            nextTurn = flipColor whosTurn
+        in do putStrLn $ moveToStr move
+              gameLoopBot newBoard nextTurn
+   else let (Left moveError) = newBoard'
+        in --do print moveError
+           case moveError of
+               IsStaleMate ->
+                  do putStrLn "StaleMate"
+                     return ()
+               IsCheckMate winner ->
+                  do putStrLn $ "CheckMate! " ++ (show winner) ++ " wins"
+                     return ()
+               IsInvalidMove s ->
+                  do putStrLn $ "Invalid move! (" ++ s ++ ")"
+                     gameLoopBot board whosTurn
+               IsPieceNotFound s ->
+                  do putStrLn $ "Cannot find starting piece: " ++ s
+                     gameLoopBot board whosTurn
+               IsOtherFailure s ->
+                  do putStrLn $ "Unknown error occured: " ++ s
+                     gameLoopBot board whosTurn
+
+gameDriverBot = do
+   board <- return newGame
+   game <- gameLoopBot board White
+   return ()
+
+--END BOT GAME
 
 
 --"a1,b2"
@@ -201,7 +245,7 @@ test2 =
 --main = test2
 main = do
    System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering --System.IO.NoBuffering
-   gameDriver
+   gameDriverBot --gameDriver
 
 
 

@@ -1,5 +1,5 @@
 module ChessUtils
-( posToCoord, coordToPos
+( posToCoord, coordToPos, moveToStr
 , boardToMatrix, displayBoardByColor
 , mkPiece, mkBoard
 , getAllBoardPieces, getBoardPieceByPos, getBoardPieceByCoord
@@ -20,7 +20,7 @@ import qualified Data.Char as C
 import qualified Data.List as L
 
 
---posToCoord/coordToPos
+--posToCoord/coordToPos/moveToStr
 posToCoord :: Position -> Coord
 posToCoord (cX, y) = (numX, y)
    where numX = C.ord cX - C.ord 'A' + 1
@@ -29,6 +29,11 @@ coordToPos :: Coord -> Position
 coordToPos (x, y) = (cX, y)
    where cX = C.chr (C.ord 'A' + x - 1)
 
+numToChr x = C.chr $ C.ord '0' + x
+
+--moveToStr $ Move (('a', 1), ('b', 2))
+moveToStr (Move ((x1, y1), (x2,y2))) =
+   [x1] ++ [numToChr y1] ++ [x2] ++ [numToChr y2]
 
 
 newGameBoard =
@@ -212,4 +217,6 @@ boardToMatrix :: Board -> M.Matrix String
 boardToMatrix b = displayBoardByColor b White
 
 mkBoardFromPair (wPieces, bPieces) = mkBoard wPieces bPieces
+
+
 

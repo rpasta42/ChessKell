@@ -1,6 +1,8 @@
 module Logic
 ( getPossibleMoves
 , newGame
+, genPossibleMoveBoards
+, getMatesAndStales
 , isUnderCheck
 , getPieceCaptures
 , getPieceMoves
@@ -16,19 +18,6 @@ import System.IO
 import System.Posix.Unistd (sleep)
 import Data.Either.Combinators (mapLeft)
 import Debug.Trace
-
-
-getPossibleMoves :: Board -> Color -> [PieceMoves]
-getPossibleMoves b White = listFilterLeft $ getPossibleMoves' b (getWhitePieces b) []
-getPossibleMoves b Black = listFilterLeft $ getPossibleMoves' b (getBlackPieces b) []
-
-getPossibleMoves' :: Board -> [BoardPiece] -> [ChessRet PieceMoves] -> [ChessRet PieceMoves]
-getPossibleMoves' b [] acc = acc
-getPossibleMoves' b bPieces@(x:xs) acc =
-   let pieceMoves1 = getPieceMoves b x
-       pieceMoves2 = pieceMoves1 --(\ (caps, moves) -> (x, caps, moves)) <$> pieceMoves1
-   in getPossibleMoves' b xs (pieceMoves2 : acc)
-
 
 
 newGame :: Board
@@ -53,6 +42,61 @@ newGame =
    --in extractRight $ (removePieceByPos' ('D', 2) board)
    --in extractRight $ (removePieceByPos' ('A', 2) board >>= removePieceByPos' ('B', 2))
 
+
+getPossibleMoves :: Board -> Color -> [PieceMoves]
+getPossibleMoves b White = listFilterLeft $ getPossibleMoves' b (getWhitePieces b) []
+getPossibleMoves b Black = listFilterLeft $ getPossibleMoves' b (getBlackPieces b) []
+
+getPossibleMoves' :: Board -> [BoardPiece] -> [ChessRet PieceMoves] -> [ChessRet PieceMoves]
+getPossibleMoves' b [] acc = acc
+getPossibleMoves' b bPieces@(x:xs) acc =
+   let pieceMoves1 = getPieceMoves b x
+       pieceMoves2 = pieceMoves1 --(\ (caps, moves) -> (x, caps, moves)) <$> pieceMoves1
+   in getPossibleMoves' b xs (pieceMoves2 : acc)
+
+--for genPossibleMoveBoards and getMatesAndStales
+getMoveBoards' :: Board -> [PieceMoves] -> [[ChessRet Board]]
+getMoveBoards' board moves =
+   map (\pMoves@(bPiece, caps, moves)
+         ->    (map (mvPiece board bPiece pMoves) caps)
+            ++ (map (mvPiece board bPiece pMoves) moves))
+       moves
+      where mvPiece b bPiece pMoves coord = movePiece b bPiece pMoves $ coordToPos coord
+
+
+genPossibleMoveBoards :: Board -> Color -> [Board]
+genPossibleMoveBoards board color =
+   let allMoves = getPossibleMoves board color
+       boards1 = getMoveBoards' board allMoves
+       boards2 = listFilterLeft $ concat boards1
+   in boards2
+
+
+--color -- next to move color to check for checkmate
+--(Maybe winner, isStalemate)
+getMatesAndStales :: Board -> Color -> (Maybe Color, Bool)
+getMatesAndStales board color =
+   let underCheckNow = eitherBoolExtract $ isUnderCheck color board --current board
+
+       allMoves = getPossibleMoves board color
+
+       boards1 = getMoveBoards' board allMoves
+       boards2 = listFilterLeft $ concat boards1
+
+       underCheckLst = map (getCheckLst color) boards2
+       allUnderCheck = all id underCheckLst --next move
+
+       --helpers
+       getCheckLst color testBoard = extractRight $ isUnderCheck color testBoard
+
+   in if underCheckNow && allUnderCheck
+      then (Just $ flipColor color, False)
+      else if (not underCheckNow && allUnderCheck)
+           then (Nothing, True)
+           else (Nothing, False)
+
+
+
 isUnderCheck :: Color -> Board -> ChessRet Bool
 isUnderCheck colorToCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=bPieces }) =
    let wKing = getBoardPieceByPiece wPieces King
@@ -70,53 +114,6 @@ isUnderCheck colorToCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=
    in case colorToCheck of
          White -> wUnderCheck
          Black -> bUnderCheck
-
-
---nextToMoveColor -- color to check for checkmate
---Maybe winner, Maybe isStalemate
-getMatesAndStales :: Board -> Color -> (Maybe Color, Maybe Bool)
-getMatesAndStales board nextToMoveColor =
-   let bUnderCheck = isUnderCheck Black board --current board
-       wUnderCheck = isUnderCheck White board --current board
-
-       allMovesB = getPossibleMoves board Black
-       allMovesW = getPossibleMoves board White
-
-       boardsB1 = getMoveBoards allMovesB
-       boardsW1 = getMoveBoards allMovesW
-
-       boardsB2 = listFilterLeft $ concat boardsB1
-       boardsW2 = listFilterLeft $ concat boardsW1
-
-       --TODO:
-       underCheckB = map (getCheckLst nextToMoveColor) boardsB2 --next to move color or B/W???
-       underCheckA = map (getCheckLst nextToMoveColor) boardsW2 --next to move color or B/w???
-
-       allUnderCheckB = all id underCheckB --next move
-       allUnderCheckW = all id underCheckA --next move
-
-       (underCheckNextPlayer, allUnderCheckNextPlayer) =
-            if nextToMoveColor == White
-            then (wUnderCheck, allUnderCheckW)
-            else (bUnderCheck, allUnderCheckB)
-
-   in if underCheckNextPlayer && allUnderCheckNextPlayer
-      then (Just $ flipColor nextToMoveColor, Nothing)
-      else if (not underCheckNextPlayer && allUnderCheckNextPlayer)
-           then (Nothing, Just True)
-           else (Nothing, Nothing)
-
-
-      where
-          --helpers
-
-          getCheckLst color testBoard = extractRight $ isUnderCheck testBoard
-
-          getMoveBoards moves =
-            map (\pMoves@(bPiece, caps, moves)
-                  ->    (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) caps)
-                     ++ (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) moves))
-                moves
 
 
 

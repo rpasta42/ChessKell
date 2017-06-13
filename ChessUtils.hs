@@ -80,6 +80,7 @@ mkPieceB = mkPiece Black
 mkBoard whitePieces blackPieces =
    Board { getWhitePieces=whitePieces
          , getBlackPieces=blackPieces
+         , getLastMove=Nothing
          }
 
 

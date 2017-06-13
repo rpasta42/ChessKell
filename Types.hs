@@ -6,7 +6,7 @@ module Types
 , Position
 , Coord
 , BoardPiece(..)
-, Board(Board, getWhitePieces, getBlackPieces)
+, Board(Board, getWhitePieces, getBlackPieces, getLastMove)
 , PieceMoves
 , Move(..)
 ) where

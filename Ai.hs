@@ -2,8 +2,10 @@ module Ai
 (
 ) where
 
+import ChessUtils (flipColor)
 import Types
 import Utils
+import Logic
 import MiniMax
 import qualified Data.Monoid as Monoid
 
@@ -28,11 +30,15 @@ getBoardScore b@(Board { getWhitePieces=wPieces
    in wScore - bScore
 
 
-generateBoardTree :: Board -> Int -> MoveTree Board
-generateBoardTree board depth
+generateBoardTree' :: Color -> Int -> Board -> MoveTree Board
+generateBoardTree' color depth board = generateBoardTree board depth color
+
+generateBoardTree :: Board -> Int -> Color -> MoveTree Board
+generateBoardTree board depth toPlay
    | depth == 0 = MoveTreeLeaf board
-   | otherwise  = MoveTreeNode board
-                               (generate
+   | otherwise  = MoveTreeNode board subTree
+      where subTree = map (generateBoardTree' (flipColor toPlay) (depth - 1))
+                          $ genPossibleMoveBoards board toPlay
 
 
 

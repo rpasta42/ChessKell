@@ -7,6 +7,7 @@ module Utils
 , listSingletonExtract
 , listFilterLeft
 , pairToList
+, eitherBoolExtract
 , pairEitherToEitherPair
 , matrixToDisplay, displayMatrix
 , matrixMap, matrixMap'
@@ -92,6 +93,10 @@ listFilterLeft lst = helper' lst []
 
 pairToList :: (a, a) -> [a]
 pairToList (a, b) = [a,b]
+
+eitherBoolExtract :: Either a Bool -> Bool
+eitherBoolExtract (Left _) = False
+eitherBoolExtract (Right x) = x
 
 newMatrix width height elem = M.matrix width height (\_ -> elem)
 

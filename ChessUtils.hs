@@ -33,7 +33,7 @@ numToChr x = C.chr $ C.ord '0' + x
 
 --moveToStr $ Move (('a', 1), ('b', 2))
 moveToStr (Move ((x1, y1), (x2,y2))) =
-   [x1] ++ [numToChr y1] ++ [x2] ++ [numToChr y2]
+   [C.toLower x1] ++ [numToChr y1] ++ [C.toLower x2] ++ [numToChr y2]
 
 
 newGameBoard =

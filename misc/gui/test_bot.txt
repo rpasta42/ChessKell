@@ -1,0 +1,15 @@
+usermove=1
+go
+new
+A2A4
+A7A5
+B2B4
+A5B4
+C2C3
+A8A4
+C3B4
+A4A1
+C1B2
+A1B1
+B4B5
+B1D1

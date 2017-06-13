@@ -1,5 +1,6 @@
 #!/bin/bash
 
+#./test_game.sh | ./pxboard.sh
 
 #echo "go\n"
 #echo "new\n"

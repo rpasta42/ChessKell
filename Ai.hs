@@ -48,14 +48,11 @@ getBoardScore b@(Board { getWhitePieces=wPieces
 
 
 
-genBoardTree' :: Int -> Color -> Board -> MoveTree Board
-genBoardTree' depth color board = genBoardTree board depth color
-
-genBoardTree :: Board -> Int -> Color -> MoveTree Board
-genBoardTree board depth toPlay
+genBoardTree :: Int -> Color -> Board -> MoveTree Board
+genBoardTree depth toPlay board
    | depth == 0 = MoveTreeLeaf board
    | otherwise  = MoveTreeNode board subTree
-      where subTree = map (genBoardTree' (depth - 1) (flipColor toPlay))
+      where subTree = map (genBoardTree depth (flipColor toPlay))
                           $ genPossibleMoveBoards board toPlay
 
 
@@ -72,7 +69,7 @@ getAiMove board color depth =
        moveBoards = map snd movesAndBoards
        moves = map fst movesAndBoards
 
-       moveTrees = map (genBoardTree' depth color) moveBoards
+       moveTrees = map (genBoardTree depth color) moveBoards
 
        boardRatings = map (minimax' depth getBoardScore isMaxi) moveTrees
 

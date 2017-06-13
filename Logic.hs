@@ -64,7 +64,6 @@ getMoveBoards' board moves =
       where mvPiece b bPiece pMoves coord = movePiece b bPiece pMoves $ coordToPos coord
 
 
-
 genPossibleMoveBoards2 :: Board -> Color -> [(Move, Board)]
 genPossibleMoveBoards2 board color =
    let allMoves1 = getPossibleMoves board color

@@ -4,6 +4,7 @@ module MiniMax
 ) where
 
 import Utils
+import Debug.Trace
 
 --a is Board
 
@@ -34,15 +35,20 @@ minimax :: (Ord b, Show b) => Int -> (a -> b) -> MoveTree a -> Bool -> Maybe b
 minimax depth checkScore (MoveTreeLeaf board) _ = Just $ checkScore board
 minimax depth checkScore (MoveTreeNode board rest) isMaxi
    | depth == 0 = Just $ checkScore board
-   | otherwise = helper depth Nothing rest where
-      helper depth acc [] = acc
-      helper depth acc (x:xs) =
-         let newIsMaxi = not isMaxi
-             foldAccFunc = if isMaxi then max else min
-             v = minimax (depth - 1) checkScore x newIsMaxi
-         in case (v, acc) of
-            (Nothing, _)            -> acc
-            (_, Nothing)            -> v
-            (Just v', Just acc')    -> Just $ foldAccFunc acc' v'
+   | otherwise = helper Nothing rest where
+      newIsMaxi = not isMaxi
+      accPick = if isMaxi then max else min
+
+      --helper acc _  _ = acc
+      helper acc [] = acc
+      helper acc (x:xs) =
+         let v = minimax (depth - 1) checkScore x newIsMaxi
+             newAcc = case (acc, v) of
+               (_, Nothing)            -> acc --trace "test1" $ acc
+               (Nothing, _)            -> v --trace "test2" $ v
+               (Just acc', Just v')    -> Just $ accPick acc' v'
+         in helper newAcc xs
+
+
 
 

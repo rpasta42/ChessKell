@@ -35,7 +35,7 @@ gameLoop board whosTurn = do
               putStrLn $ "\n\n================" ++ (show nextTurn) ++ "'s Turn\n"
               print $ displayBoardByColor newBoard nextTurn
 
-              let aiMove = getAiMove newBoard nextTurn 5
+              let aiMove = getAiMove newBoard nextTurn 2
               aiEval <- putStrLn $ (show aiMove) ++ ": chosen computer move"
 
               gameLoop newBoard nextTurn

@@ -2,5 +2,5 @@ f2,f3
 e7,e5
 g2,g4
 d8,g4 --should be illegal????? bug!!
-d8,g4
+d8,h4
 

@@ -45,3 +45,4 @@ minimax depth checkScore (MoveTreeNode board rest) isMaxi
             (_, Nothing)            -> v
             (Just v', Just acc')    -> Just $ foldAccFunc acc' v'
 
+

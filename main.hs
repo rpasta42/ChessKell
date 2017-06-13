@@ -24,9 +24,6 @@ getPlayerMove = do
 gameLoop board whosTurn = do
    moveStr <- getPlayerMove
 
-   let aiMove = getAiMove board whosTurn 5
-   aiEval <- putStrLn [(show aiMove) !! 0]
-
    let move = extractRight . strToMove $ moveStr
        newBoard' = step board Nothing whosTurn move
 
@@ -37,6 +34,10 @@ gameLoop board whosTurn = do
               print $ displayBoardByColor newBoard whosTurn
               putStrLn $ "\n\n================" ++ (show nextTurn) ++ "'s Turn\n"
               print $ displayBoardByColor newBoard nextTurn
+
+              let aiMove = getAiMove newBoard nextTurn 5
+              aiEval <- putStrLn $ (show aiMove) ++ ": chosen computer move"
+
               gameLoop newBoard nextTurn
    else let (Left moveError) = newBoard'
         in --do print moveError

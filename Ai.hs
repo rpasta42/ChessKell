@@ -38,8 +38,8 @@ getBoardScore b@(Board { getWhitePieces=wPieces
        (maybeWinnerW, isDrawW) = getMatesAndStales b White
        checkMateScore =
          case (maybeWinnerW, maybeWinnerB) of
-            (Just _, _) -> 100000
-            (_, Just _) -> -100000
+            --(Just White, _) -> 100000
+            --(_, Just Black) -> -100000
             _           -> 0
 
        finalScore = boardScore + checkMateScore
@@ -62,17 +62,17 @@ genBoardTree board depth toPlay
 
 getAiMove :: Board -> Color -> Int -> Maybe (Move, Int)
 getAiMove board color depth =
-   let allMoves = getPossibleMoves board color
+   let isMaxi = color == White
+       testSign :: Ord a => a -> a -> Bool
+       testSign = if isMaxi then (>) else (<)
+
+       allMoves = getPossibleMoves board color
 
        movesAndBoards = genPossibleMoveBoards2 board color
        moveBoards = map snd movesAndBoards
        moves = map fst movesAndBoards
 
        moveTrees = map (genBoardTree' depth color) moveBoards
-
-       isMaxi = color == White
-       testSign :: Ord a => a -> a -> Bool
-       testSign = if isMaxi then (>) else (<)
 
        boardRatings = map (minimax' depth getBoardScore isMaxi) moveTrees
 
@@ -97,9 +97,11 @@ getAiMove board color depth =
                         Nothing
                         moveAndBoardRatings3
 
-   in trace --(L.intercalate "\n" $ map show moveAndBoardRatings)
-            ("computer move:" ++ (show goodMove))
-            $ goodMove
+   {-in trace (L.intercalate "\n" $ map show moveAndBoardRatings3)
+            --("computer move:" ++ (show goodMove))
+            $ goodMove-}
+   in goodMove
+
 
 
 

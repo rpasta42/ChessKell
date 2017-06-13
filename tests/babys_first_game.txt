@@ -1,0 +1,5 @@
+
+minimax playing against itself:
+1. d4 a5 2. a4 b5 3. axb5 a4 4. Rxa4 Rxa4
+5. b6 cxb6 6. b4 Rxb4 7. c4 Rxb1
+

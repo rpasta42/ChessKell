@@ -98,7 +98,6 @@ step board pawnPromo color (Move (from, to)) =
                 then Left $ IsInvalidMove "wrong color piece"
                 else Right pColor'
 
-
       pieceMoves1 <- mapLeft (\errStr -> IsOtherFailure $ "getPieceMoves failed: " ++ errStr)
                              $ getPieceMoves board piece
 
@@ -121,21 +120,23 @@ step board pawnPromo color (Move (from, to)) =
                                          $ isUnderCheck nextColor newBoard
 
       -----
-      let allMoves = getPossibleMoves newBoard nextColor
+      let {-allMoves = getPossibleMoves newBoard nextColor
           allNewBoards' = map (\pMoves@(bPiece, caps, moves)
                                    ->    (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) caps)
                                       ++ (map (\x -> movePiece newBoard bPiece pMoves $ coordToPos x) moves))
                               allMoves
 
-          allNewBoards = listFilterLeft $ concat allNewBoards'
+          allNewBoardsOld = listFilterLeft $ concat allNewBoards' -}
+          allNewBoards = genPossibleMoveBoards newBoard nextColor
 
           allNewBoardsCheckLst = map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard)
                                      allNewBoards
 
           allUnderCheck' = all (\x -> x) allNewBoardsCheckLst
 
-          allUnderCheck = trace ((show allNewBoardsCheckLst) ++ ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves)))
-                                $ allUnderCheck'
+          --allUnderCheck = trace ((show allNewBoardsCheckLst) ++ ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves)))
+          --                      $ allUnderCheck'
+          allUnderCheck = allUnderCheck'
 
           isCheckMate' = allUnderCheck' && isUnderCheckOtherColor2
 
@@ -148,17 +149,25 @@ step board pawnPromo color (Move (from, to)) =
           --isStaleMate = filter ((/=) True)
           --                     (map (\testBoard -> extractRight $ isUnderCheck nextColor testBoard))
 
+          --new
           isStaleMate = allUnderCheck'
 
-          (maybeWinner, isStaleMate1) = getMatesAndStales board color
+          (maybeWinner, isStaleMate1) = getMatesAndStales board (flipColor color)
 
       case (isCheckMate, isStaleMate, isUnderCheckNextMove, isUnderCheckPrevMove) of
             (True, _, _, _)      -> Left $ IsCheckMate color
             (_, True, _, _)      -> Left IsStaleMate
             (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"
             (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
-
             _ -> Right newBoard
+
+      {-case (maybeWinner, isStaleMate1, isUnderCheckNextMove, isUnderCheckPrevMove) of
+            (Just c, _, _, _)    -> Left $ IsCheckMate c
+            (_, True, _, _)      -> Left IsStaleMate
+            (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"
+            (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
+
+            _ -> Right newBoard-}
 
 
 {-

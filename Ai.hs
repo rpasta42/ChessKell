@@ -1,5 +1,7 @@
 module Ai
-(
+( getPieceValue
+, getBoardScore
+, generateBoardTree
 ) where
 
 import ChessUtils (flipColor)
@@ -9,8 +11,8 @@ import Logic
 import MiniMax
 import qualified Data.Monoid as Monoid
 
---100 centipawn (cp) = 1 pawn
 getPieceValue :: Piece -> Int
+--100 centipawn (cp) = 1 pawn
 getPieceValue Pawn = 100
 getPieceValue Knight = 300
 getPieceValue Bishop = 301

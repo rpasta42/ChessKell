@@ -85,6 +85,15 @@ genPossibleMoveBoards2 board color =
                      (concat boards3)
 
        boards5 = listFilterLeft boards4
+
+       {-boards6 = map (\ (pos, board) ->
+                           if extractRight $ isUnderCheck color board
+                           then Left "can't go under check"
+                           else Right (pos, board))
+                     boards5
+
+       boards7 = listFilterLeft boards6-}
+
    in boards5 --istParSeq2 boards5
 
 
@@ -98,6 +107,9 @@ genPossibleMoveBoards board color =
 
        boards1 = getMoveBoards' board allMoves
        boards2 = listFilterLeft $ concat boards1
+
+       --boards3 = listParSeq2 $ filter (\ x -> not . extractRight $ isUnderCheck color x) boards2
+
    in boards2
 
 

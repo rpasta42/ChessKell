@@ -32,8 +32,8 @@ setlocal nodiff
 setlocal equalprg=
 setlocal errorformat=
 setlocal expandtab
-if &filetype != 'haskell'
-setlocal filetype=haskell
+if &filetype != 'text'
+setlocal filetype=text
 endif
 setlocal fixendofline
 setlocal foldcolumn=0
@@ -92,8 +92,8 @@ setlocal statusline=
 setlocal suffixesadd=
 setlocal swapfile
 setlocal synmaxcol=3000
-if &syntax != 'haskell'
-setlocal syntax=haskell
+if &syntax != 'text'
+setlocal syntax=text
 endif
 setlocal tabstop=6
 setlocal tagcase=
@@ -107,17 +107,12 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-1,4fold
-18,26fold
-33,58fold
-33
-normal! zo
-let s:l = 56 - ((50 * winheight(0) + 33) / 67)
+let s:l = 5 - ((4 * winheight(0) + 9) / 19)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-56
-normal! 048|
+5
+normal! 04|
 let &so = s:so_save | let &siso = s:siso_save
 doautoall SessionLoadPost
 " vim: set ft=vim :

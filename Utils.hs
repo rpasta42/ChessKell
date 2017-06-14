@@ -11,14 +11,37 @@ module Utils
 , pairEitherToEitherPair
 , matrixToDisplay, displayMatrix
 , matrixMap, matrixMap'
+, listParSeq2, listParSeq3, listParSeq4
 ) where
 
 import qualified Data.Matrix as M
 import qualified Data.List as L
+import qualified Control.Parallel as P
 
 import Types
 
 
+--ghc main.hs +RTS -N3 -s -RTS -threaded; time ./main
+--ghc main.hs +RTS -N3 -s -RTS -threaded -O2; time ./main +RTS -N3
+
+listParSeq2 :: [x] -> [x]
+listParSeq2 lst = helper lst []
+   where helper [] acc = acc
+         helper [x] acc = x:acc
+         helper (x1:x2:xs) acc =
+            helper xs $ P.par x1 (P.pseq x2 (x1:x2:acc))
+
+listParSeq3 :: [x] -> [x]
+listParSeq3 lst = helper lst []
+   where helper [] acc = acc
+         helper [x] acc = x:acc
+         helper (x1:x2:x3:xs) acc =
+            helper xs $ P.par x1 (P.par x2 (P.pseq x3 (x1:x2:x3:acc)))
+         helper (x1:x2:xs) acc =
+            helper xs $ P.par x1 (P.pseq x2 (x1:x2:acc))
+
+
+listParSeq4 = 0
 
 elemIndex' :: (Eq a) => a -> [a] -> Either String Int
 elemIndex' item items =

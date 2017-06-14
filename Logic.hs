@@ -63,7 +63,6 @@ getMoveBoards' board moves =
        moves
       where mvPiece b bPiece pMoves coord = movePiece b bPiece pMoves $ coordToPos coord
 
-
 genPossibleMoveBoards2 :: Board -> Color -> [(Move, Board)]
 genPossibleMoveBoards2 board color =
    let allMoves1 = getPossibleMoves board color
@@ -86,7 +85,7 @@ genPossibleMoveBoards2 board color =
                      (concat boards3)
 
        boards5 = listFilterLeft boards4
-   in boards5
+   in boards5 --istParSeq2 boards5
 
 
 genPossibleMoveBoards :: Board -> Color -> [Board]
@@ -159,7 +158,7 @@ isUnderCheck colorToCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=
 --fst: with list of all pieces it can capture, and
 --snd: a list of all the possible non-capture moves-}
 
-getPieceCaptures :: Board ->  [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
+getPieceCaptures :: Board -> [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
 
 {-getPieceCaptures b moves bPiece@(BoardPiece { getPiece = Knight }) =
    let flatMoves = concat moves

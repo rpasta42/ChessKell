@@ -5,6 +5,7 @@ module MiniMax
 
 import Utils
 import Debug.Trace
+import qualified Control.Parallel as P
 
 --a is Board
 
@@ -41,6 +42,20 @@ minimax depth checkScore (MoveTreeNode board rest) isMaxi
 
       --helper acc _  _ = acc
       helper acc [] = acc
+
+      helper acc (x1:x2:xs) = --new pattern
+         let v1 = minimax (depth - 1) checkScore x1 newIsMaxi
+             v2 = minimax (depth - 1) checkScore x2 newIsMaxi
+             newAcc =
+               foldl (\acc x ->
+                        case (acc, x) of
+                           (_, Nothing) -> acc
+                           (Nothing, _) -> x
+                           (Just acc', Just x') -> Just $ accPick acc' x')
+                     Nothing
+                     (listParSeq3 [v1, v2, acc])
+         in helper newAcc xs
+
       helper acc (x:xs) =
          let v = minimax (depth - 1) checkScore x newIsMaxi
              newAcc = case (acc, v) of
@@ -48,7 +63,6 @@ minimax depth checkScore (MoveTreeNode board rest) isMaxi
                (Nothing, _)            -> v --trace "test2" $ v
                (Just acc', Just v')    -> Just $ accPick acc' v'
          in helper newAcc xs
-
 
 
 

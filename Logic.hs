@@ -269,11 +269,41 @@ getCastleMoves board bPiece =
        color = getColor bPiece
        pos   = getPosition bPiece
        moved = getHaveMoved bPiece
-       bPieces = if color == White
-                 then getWhitePieces board
-                 else getBlackPieces board
-       rooks = filter (\ (BoardPiece {getPiece=p}) -> p == Rook)
+       (x,y) = pos
 
+       coordsQ = ['B', 'C', 'D'] --queen/king side
+       coordsK = ['F', 'G']
+
+       rowCoord = if color == White then 1 else 8
+
+       getByCol x = getBoardPieceByPos board (x, rowCoord)
+
+       rookQ = getHaveMoved <$> getByCol 'A'
+       rookK = getHaveMoved <$> getByCol 'H'
+
+       goodRookQ = isRight rookQ && (extractRight rookQ == False)
+       goodRookK = isRight rookK && (extractRight rookK == False)
+
+       inBetweenQ = map getByCol coordsQ
+       inBetweenK = map getByCol coordsK
+
+       goodInBetweenQ = all (not . isRight) inBetweenQ
+       goodInBetweenK = all (not . isRight) inBetweenK
+
+       castleK = if goodRookK && goodInBetweenK then [('G', rowCoord)] else []
+       castleQ = if goodRookQ && goodInBetweenQ then [('C', rowCoord)] else []
+
+       ret' = if not moved
+              then [map posToCoord castleK, map posToCoord castleQ]
+              else []
+
+       ret = trace (   "\n#queenRookMoved: " ++ (show rookQ)
+                    ++ "\n#KingRookMoved: " ++ (show rookK)
+                    ++ "\n#goodInBetweenQ: " ++ (show goodInBetweenQ)
+                    ++ "\n#goodInBetweenK: " ++ (show goodInBetweenK))
+                   $ ret'
+
+   in ret'
 
 getPieceMoves' :: Board -> BoardPiece -> [[Coord]]
 getPieceMoves' b bPiece =
@@ -335,7 +365,7 @@ getPieceMoves' b bPiece =
          let xs = [x-1..x+1]
              ys = [y-1..y+1]
              moves1 = [[(x,y)] | x <- xs, y <- ys] --zip xs ys
-             castleMoves = getCastleMoves board bPiece
+             castleMoves = getCastleMoves b bPiece
          in moves1 ++ castleMoves
 
        helper' Pawn (x,y) = --TODO: capturing, 2 moves, en-passant

@@ -150,8 +150,6 @@ isIllegalMove pMoves@(_, captures, moves) destPos =
        isLegal = destCoord `elem` allCoords
    in not isLegal
 
-
-
 promotePawn :: Board -> BoardPiece -> Position -> Board
 promotePawn board
             bPiece@(BoardPiece {getPiece=p, getColor=c, getPosition=pos})
@@ -164,15 +162,41 @@ promotePawn board
       then mkBoard (newPiece : newBoardW) newBoardB
       else mkBoard newBoardW (newPiece : newBoardB)
 
+--only do the rook dance, movePiece already takes care of king
+castlePlz :: Board -> Color -> Bool -> Board
+castlePlz board color isKingSide =
+   let y = if color == White then 1 else 8
+       startX = if isKingSide then 'H' else 'A'
+       endX = if isKingSide then 'F' else 'D'
+
+       oldPos = (startX, y)
+       newPos = (endX, y)
+
+       newPiece = mkPiece color Rook newPos True
+
+       newBoard1 = removePieceAtPos board oldPos
+
+       wPieces = getWhitePieces newBoard1
+       bPieces = getBlackPieces newBoard1
+   in if color == White
+      then mkBoard (newPiece : wPieces) bPieces
+      else mkBoard wPieces (newPiece : bPieces)
+
+
 
 --no checks for valid moves
 movePiece :: Board -> BoardPiece -> PieceMoves
           -> Position -> ChessRet Board
 movePiece board
-          piece@(BoardPiece {getPiece=p, getColor=c})
+          piece@(BoardPiece {getPiece=p, getColor=c, getPosition=(x,y)})
           pMoves
           newPos@(destX,destY) =
-   let newBoard = removePieceAtPos board newPos
+   let newBoard' = removePieceAtPos board newPos
+
+       isCastle = p == King && x == 'E' && (destX == 'G' || destX == 'C')
+       isCastleK = destX == 'G'
+       newBoard = if not isCastle then newBoard' else castlePlz newBoard' c isCastleK
+
        newPiece = mkPiece c p newPos True
        wPieces = getWhitePieces newBoard
        bPieces = getBlackPieces newBoard
@@ -191,6 +215,7 @@ movePiece board
                             (replaceLstIndex bPieces bIndex' newPiece)
          _ -> Left $ "movePiece pattern fail: piece not found"
                      ++ " or both in black/white"
+
 
 removePieceAtPos :: Board -> Position -> Board
 removePieceAtPos b pos =

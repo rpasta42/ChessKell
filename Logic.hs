@@ -263,6 +263,18 @@ getPieceMoves board bPiece =
          --else return capsAndMoves
 
 
+getCastleMoves :: Board -> BoardPiece -> [[Coord]]
+getCastleMoves board bPiece =
+   let piece = getPiece bPiece
+       color = getColor bPiece
+       pos   = getPosition bPiece
+       moved = getHaveMoved bPiece
+       bPieces = if color == White
+                 then getWhitePieces board
+                 else getBlackPieces board
+       rooks = filter (\ (BoardPiece {getPiece=p}) -> p == Rook)
+
+
 getPieceMoves' :: Board -> BoardPiece -> [[Coord]]
 getPieceMoves' b bPiece =
    let piece = getPiece bPiece
@@ -322,10 +334,9 @@ getPieceMoves' b bPiece =
        helper' King (x,y) = --TODO: check
          let xs = [x-1..x+1]
              ys = [y-1..y+1]
-             --xMoves1 = map (\x -> (x,y)) xs
-             --yMoves1 = map (\y -> (x,y)) ys
-             --horizontal = zip xs ys
-         in [[(x,y)] | x <- xs, y <- ys] --zip xs ys
+             moves1 = [[(x,y)] | x <- xs, y <- ys] --zip xs ys
+             castleMoves = getCastleMoves board bPiece
+         in moves1 ++ castleMoves
 
        helper' Pawn (x,y) = --TODO: capturing, 2 moves, en-passant
          let newWhite1 = (x, y+1)

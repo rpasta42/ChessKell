@@ -1,3 +1,6 @@
+*.o
+*.hi
+main
 *.swp
 .cabal-sandbox
 cabal.sandbox.config

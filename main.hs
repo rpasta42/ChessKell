@@ -116,45 +116,114 @@ gameDriverBot = do
    game <- gameLoopBot board White 100
    return ()
 
+--END BOT GAME
 
-loopPersonVsEngine =  do
+
+--START PLAYER VS ENGINE
+
+xboardMoveToMove moveStr =
+   let (_, moveStr1) = splitAt 9 moveStr
+       (fromStr, toStr) = splitAt 2 moveStr1
+       moveStr3 = fromStr ++ "," ++ toStr
+       move = strToMove moveStr3
+   in move
+
+pVeCheck board currColor botColor move = do
+   let newBoard' = step board Nothing currColor move
+
+   if isRight newBoard'
+   then let newBoard = extractRight newBoard'
+            nextTurn = flipColor currColor
+        in do
+            if currColor == botColor
+            then putStrLn $ "move " ++ (moveToStr move)
+            else return ()
+            pVeHelper newBoard nextTurn botColor
+   else let (Left moveError) = newBoard'
+        in --do print moveError
+           case moveError of
+               IsStaleMate ->
+                  do putStrLn "#StaleMate"
+                     return ()
+               IsCheckMate winner ->
+                  do putStrLn $ "#CheckMate! " ++ (show winner) ++ " wins"
+                     return ()
+               IsInvalidMove s ->
+                  do putStrLn $ "#Invalid move! (" ++ s ++ ")"
+                     return () --gameLoopBot board whosTurn
+               IsPieceNotFound s ->
+                  do putStrLn $ "#Cannot find starting piece: " ++ s
+                     return () --gameLoopBot board whosTurn
+               IsOtherFailure s ->
+                  do putStrLn $ "#Unknown error occured: " ++ s
+                     return () --gameLoopBot board whosTurn
+
+
+pVeHelper board currColor botColor = do
+
+   if currColor == botColor
+   then let move = getPlayerMoveBot board currColor
+        in do putStrLn "#bot move"
+              pVeCheck board currColor botColor move
+   else do line <- getLine
+           putStrLn $ "#got: " ++ line
+
+           if substring "usermove" line
+           then let opponentMove = extractRight $ xboardMoveToMove line
+                in pVeCheck board currColor botColor opponentMove
+           else pVeHelper board currColor botColor
+
+personVsEngineLoop board color botColor hasStarted = do
    line <- getLine
    putStrLn $ "#got: " ++ line
 
-   if line == "book" --"go"
-   then do putStrLn "sdfd"
-           --System.IO.hFlush System.IO.stdout
-   else return () --putStrLn " "
+   if line == "go"
+   then do putStrLn "we have go!"
+           --personVsEngineLoop board color botColor True
+           pVeHelper board color botColor
+   else return ()
 
+   --TODO: remove if statement
+   if hasStarted
+   then pVeHelper board color botColor
+   else personVsEngineLoop board color botColor False
 
-   if line == "go" --"go"
+personVsEngineSetup = do
+   line <- getLine
+   putStrLn $ "#got: " ++ line
+
+   if substring "protover" line
+      then putStrLn "feature sigint=0 sigterm=0 time=0 usermove=1 done=1"
+      else return ()
+
+   {-if line == "book"
+   then do putStrLn "sdfd" --System.IO.hFlush System.IO.stdout
+   else return ()-}
+
+   if line == "white" || line == "black"
+   then let board = newGame
+            color = if line == "white" then White else Black
+        in do putStrLn $ "#we have color: " ++ line ++ " " ++ (show color)
+              personVsEngineLoop newGame White color False
+   else personVsEngineSetup
+
+   {-if line == "go"
    then do putStrLn "move a2a4"
            --System.IO.hFlush System.IO.stdout
    else return () --putStrLn " "
 
-
    if line == "c7c5"
    then do putStrLn "move b2b3"
-   else return ()
+   else return ()-}
 
    --putStrLn $ "got: " ++ line
 
-   if line == "quit" -- || line == "force"
+   if line == "quit" -- || substring "result" line
    then return ()
-   else loopPersonVsEngine
-
-driverPersonVsEngine = do
-   --putStrLn "usermove=1"
-   --putStrLn "go"
-   --putStrLn "new"
-   --putStrLn "playother"
-
-   putStrLn "feature sigint=0 sigterm=0 time=0"
-   loopPersonVsEngine
+   else personVsEngineSetup
 
 
-
---END BOT GAME
+--END PLAYER VS ENGINE
 
 
 --"a1,b2"
@@ -299,7 +368,7 @@ main = do
    System.IO.hSetBuffering System.IO.stdin System.IO.NoBuffering
 
    --gameDriverBot
-   driverPersonVsEngine
+   personVsEngineSetup
    --gameDriver
 
 

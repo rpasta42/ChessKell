@@ -13,6 +13,7 @@ module Utils
 , matrixMap, matrixMap'
 , listParSeq2, listParSeq3, listParSeq4
 , showListLines
+, substring
 ) where
 
 import qualified Data.Matrix as M
@@ -170,6 +171,16 @@ matrixMap' m f x y accM
 
 showListLines x = concat . map show $ x
 
+substring :: String -> String -> Bool
+substring (x:xs) [] = False
+substring xs ys
+    | prefix xs ys = True
+    | substring xs (tail ys) = True
+    | otherwise = False
 
+prefix :: String -> String -> Bool
+prefix [] ys = True
+prefix (x:xs) [] = False
+prefix (x:xs) (y:ys) = (x == y) && prefix xs ys
 
 

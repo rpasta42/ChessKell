@@ -1,4 +1,6 @@
 *.o
+xboard.debug
+xboard.log
 *.hi
 main
 *.swp

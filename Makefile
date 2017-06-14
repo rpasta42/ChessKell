@@ -1,7 +1,7 @@
 
 runflags=+RTS -N3
-#guiData=-mode MachineBlack
-guiData=-mode MachineWhite
+guiData=-mode MachineBlack
+#guiData=-mode MachineWhite
 
 build: #clean
 	ghc main.hs -O3 +RTS -N3 -s -RTS -threaded

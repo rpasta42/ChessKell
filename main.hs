@@ -138,7 +138,7 @@ pVeCheck board currColor botColor move = do
             if currColor == botColor
             then putStrLn $ "move " ++ (moveToStr move)
             else return ()
-            pVeHelper newBoard nextTurn botColor
+            pVeHelper newBoard nextTurn botColor Nothing
    else let (Left moveError) = newBoard'
         in --do print moveError
            case moveError of
@@ -159,53 +159,70 @@ pVeCheck board currColor botColor move = do
                      return () --gameLoopBot board whosTurn
 
 
-pVeHelper board currColor botColor = do
+pVeHelper board currColor botColor maybeMove = do
 
-   if currColor == botColor
+   if isJust maybeMove
+   then let move = extractRight $ xboardMoveToMove (extractJust maybeMove)
+        in pVeCheck board White Black move
+   else return ()
+
+   if currColor == botColor && (not $ isJust maybeMove)
    then let move = getPlayerMoveBot board currColor
         in do putStrLn "#bot move"
               pVeCheck board currColor botColor move
    else do line <- getLine
            putStrLn $ "#got: " ++ line
 
-           if substring "usermove" line
+           if substring "usermove" line && (not $ substring "accepted" line)
            then let opponentMove = extractRight $ xboardMoveToMove line
                 in pVeCheck board currColor botColor opponentMove
-           else pVeHelper board currColor botColor
+           else pVeHelper board currColor botColor Nothing
 
 personVsEngineLoop board color botColor hasStarted = do
    line <- getLine
    putStrLn $ "#got: " ++ line
 
+   let newColor = if botColor == White then White else
+                  if line == "white" then White else color
+
    if line == "go"
-   then do putStrLn "we have go!"
+   then do putStrLn $ "#we have go! starting color: " ++ (show color)
+                      ++ "\n#bot color:" ++ (show botColor)
            --personVsEngineLoop board color botColor True
-           pVeHelper board color botColor
+           pVeHelper board color newColor Nothing
    else return ()
 
+   if substring "usermove" line && (not $ substring "accepted" line)
+   then do pVeHelper board color Black (Just line)
+   else return ()
+
+
    --TODO: remove if statement
-   if hasStarted
-   then pVeHelper board color botColor
-   else personVsEngineLoop board color botColor False
+   --if hasStarted
+   --then pVeHelper board color botColor
+   --else personVsEngineLoop board color botColor False
+
+   personVsEngineLoop board color newColor False
 
 personVsEngineSetup = do
    line <- getLine
    putStrLn $ "#got: " ++ line
 
    if substring "protover" line
-      then putStrLn "feature sigint=0 sigterm=0 time=0 usermove=1 done=1"
+      then putStrLn "feature sigint=0 sigterm=0 time=0 usermove=1 colors=0 done=1"
       else return ()
 
    {-if line == "book"
    then do putStrLn "sdfd" --System.IO.hFlush System.IO.stdout
    else return ()-}
 
-   if line == "white" || line == "black"
-   then let board = newGame
-            color = if line == "white" then White else Black
-        in do putStrLn $ "#we have color: " ++ line ++ " " ++ (show color)
-              personVsEngineLoop newGame White color False
-   else personVsEngineSetup
+
+   let board = newGame
+       haveProtoVer = substring "protover" line
+
+   if haveProtoVer
+   then  personVsEngineLoop newGame White Black False
+   else return ()
 
    {-if line == "go"
    then do putStrLn "move a2a4"
@@ -215,8 +232,6 @@ personVsEngineSetup = do
    if line == "c7c5"
    then do putStrLn "move b2b3"
    else return ()-}
-
-   --putStrLn $ "got: " ++ line
 
    if line == "quit" -- || substring "result" line
    then return ()

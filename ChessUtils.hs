@@ -152,13 +152,26 @@ isIllegalMove pMoves@(_, captures, moves) destPos =
 
 
 
+promotePawn :: Board -> BoardPiece -> Position -> Board
+promotePawn board
+            bPiece@(BoardPiece {getPiece=p, getColor=c, getPosition=pos})
+            newPos@(x, y) =
+   let newBoard = removePieceAtPos board pos
+       newBoardW = getWhitePieces newBoard
+       newBoardB = getBlackPieces newBoard
+       newPiece = mkPiece c Queen newPos True
+   in if c == White
+      then mkBoard (newPiece : newBoardW) newBoardB
+      else mkBoard newBoardW (newPiece : newBoardB)
+
+
 --no checks for valid moves
 movePiece :: Board -> BoardPiece -> PieceMoves
           -> Position -> ChessRet Board
 movePiece board
           piece@(BoardPiece {getPiece=p, getColor=c})
           pMoves
-          newPos =
+          newPos@(destX,destY) =
    let newBoard = removePieceAtPos board newPos
        newPiece = mkPiece c p newPos True
        wPieces = getWhitePieces newBoard
@@ -166,12 +179,14 @@ movePiece board
        wIndex = L.elemIndex piece wPieces
        bIndex = L.elemIndex piece bPieces
        isIllegal = isIllegalMove pMoves newPos
-   in case (wIndex, bIndex, isIllegal) of
-         (_, _, True) -> Left $ "illegal move!!"
-         (Just wIndex', Nothing, _) ->
+       isPawnAtLast = p == Pawn && ((c == White && destY == 8) || (c == Black && destY == 1))
+   in case (wIndex, bIndex, isIllegal, isPawnAtLast) of
+         (_, _, True, _) -> Left $ "illegal move!!"
+         (_, _, _, True) -> Right $ promotePawn board piece newPos
+         (Just wIndex', Nothing, _, _) ->
             Right $ mkBoard (replaceLstIndex wPieces wIndex' newPiece)
                             bPieces
-         (Nothing, Just bIndex', _) ->
+         (Nothing, Just bIndex', _, _) ->
             Right $ mkBoard wPieces
                             (replaceLstIndex bPieces bIndex' newPiece)
          _ -> Left $ "movePiece pattern fail: piece not found"

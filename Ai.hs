@@ -100,7 +100,10 @@ getAiMove board color depth =
        --listParSeq3: 1m39 secs
        --movesAndBoards = genPossibleMoveBoards2 board color
 
-       movesAndBoards = listParSeq2 $ genPossibleMoveBoards2 board color
+       movesAndBoards' = listParSeq2 $ genPossibleMoveBoards2 board color
+       movesAndBoards = filter (\(_, board)
+                                    -> not . extractRight $ isUnderCheck color board)
+                               movesAndBoards'
 
        moveBoards = map snd movesAndBoards
        moves = map fst movesAndBoards

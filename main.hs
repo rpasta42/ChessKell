@@ -15,6 +15,8 @@ import Debug.Trace
 
 --step newGame Nothing White (extractRight $ strToMove "a2,a4") Nothing
 
+botDepth = 3
+
 --START NORMAL COMMAND LINE GAME
 
 getPlayerMove = do
@@ -37,7 +39,7 @@ gameLoop board whosTurn = do
               putStrLn $ "\n\n================" ++ (show nextTurn) ++ "'s Turn\n"
               print $ displayBoardByColor newBoard nextTurn
 
-              let aiMove = getAiMove newBoard nextTurn 2
+              let aiMove = getAiMove newBoard nextTurn botDepth
               aiEval <- putStrLn $ (show aiMove) ++ ": chosen computer move"
 
               gameLoop newBoard nextTurn
@@ -74,9 +76,10 @@ gameDriver = do
 --START BOT GAME
 
 getPlayerMoveBot board whosTurn =
-   fst . extractJust $ getAiMove board whosTurn 3
+   fst . extractJust $ getAiMove board whosTurn botDepth
 
-gameLoopBot board whosTurn = do
+gameLoopBot _ _ 0 = do return ()
+gameLoopBot board whosTurn n = do
    let move = getPlayerMoveBot board whosTurn
        newBoard' = step board Nothing whosTurn move
 
@@ -84,7 +87,7 @@ gameLoopBot board whosTurn = do
    then let newBoard = extractRight newBoard'
             nextTurn = flipColor whosTurn
         in do putStrLn $ moveToStr move
-              gameLoopBot newBoard nextTurn
+              gameLoopBot newBoard nextTurn (n-1)
    else let (Left moveError) = newBoard'
         in --do print moveError
            case moveError of
@@ -110,8 +113,46 @@ gameDriverBot = do
    putStrLn "new"
 
    board <- return newGame
-   game <- gameLoopBot board White
+   game <- gameLoopBot board White 100
    return ()
+
+
+loopPersonVsEngine =  do
+   line <- getLine
+   putStrLn $ "#got: " ++ line
+
+   if line == "book" --"go"
+   then do putStrLn "sdfd"
+           --System.IO.hFlush System.IO.stdout
+   else return () --putStrLn " "
+
+
+   if line == "go" --"go"
+   then do putStrLn "move a2a4"
+           --System.IO.hFlush System.IO.stdout
+   else return () --putStrLn " "
+
+
+   if line == "c7c5"
+   then do putStrLn "move b2b3"
+   else return ()
+
+   --putStrLn $ "got: " ++ line
+
+   if line == "quit" -- || line == "force"
+   then return ()
+   else loopPersonVsEngine
+
+driverPersonVsEngine = do
+   --putStrLn "usermove=1"
+   --putStrLn "go"
+   --putStrLn "new"
+   --putStrLn "playother"
+
+   putStrLn "feature sigint=0 sigterm=0 time=0"
+   loopPersonVsEngine
+
+
 
 --END BOT GAME
 
@@ -246,10 +287,20 @@ test2 =
 
 -}
 
+
 --main = test2
 main = do
-   System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering --System.IO.NoBuffering
-   gameDriverBot --gameDriver
+   --default for person vs person or bot vs bot
+   --System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering --System.IO.NoBuffering
+
+
+   --bot vs player
+   System.IO.hSetBuffering System.IO.stdout System.IO.NoBuffering
+   System.IO.hSetBuffering System.IO.stdin System.IO.NoBuffering
+
+   --gameDriverBot
+   driverPersonVsEngine
+   --gameDriver
 
 
 

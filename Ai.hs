@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleInstances #-}
 module Ai
 ( getPieceValue
 , getBoardScore
@@ -5,14 +6,38 @@ module Ai
 , getAiMove
 ) where
 
+
 import qualified Data.List as L
 import ChessUtils (flipColor)
 import Types
 import Utils
 import Logic
+import ChessUtils
 import MiniMax
 import qualified Data.Monoid as Monoid
 import Debug.Trace
+
+
+mkSpaces 0 = []
+mkSpaces n = ' ' : mkSpaces (n-1)
+
+
+addTabs num lst = unlines $ map ((++) spaces)
+                            (lines lst)
+   where spaces = mkSpaces num
+
+instance Show (MoveTree Board) where
+   show tree = "\n\n" ++ helper 0 tree
+      where
+         helper depth (MoveTreeLeaf x) = {-"L " ++ -}
+            "\n" ++ (addTabs depth . matrixToDisplay $ displayBoardByColor x White)
+
+         helper depth (MoveTreeNode x sub) =
+               "\n"
+            ++  mkSpaces depth
+            ++ "N " -- ++ (show x)
+            ++ (concat $ map (helper $ depth+3) sub)
+
 
 getPieceValue :: Piece -> Int
 --100 centipawn (cp) = 1 pawn
@@ -28,10 +53,10 @@ getBoardScore :: Board -> Int
 getBoardScore b@(Board { getWhitePieces=wPieces
                        , getBlackPieces=bPieces
                        }) =
-   let getBoardScore = Monoid.getSum . mconcat
+   let getTotalScore = Monoid.getSum . mconcat
        getPieceScore = Monoid.Sum . getPieceValue . getPiece
-       wScore = getBoardScore $ map getPieceScore wPieces
-       bScore = getBoardScore $ map getPieceScore bPieces
+       wScore = getTotalScore $ map getPieceScore wPieces
+       bScore = getTotalScore $ map getPieceScore bPieces
        boardScore = wScore - bScore
 
        (maybeWinnerB, isDrawB) = getMatesAndStales b Black
@@ -46,15 +71,20 @@ getBoardScore b@(Board { getWhitePieces=wPieces
 
    in finalScore
 
+   {-in trace (if finalScore > 0 then "White wining"
+            else if finalScore == 0 then "Tie"
+            else "Black winning")
+            $ finalScore-}
+
 
 
 genBoardTree :: Int -> Color -> Board -> MoveTree Board
 genBoardTree depth toPlay board
    | depth == 0 = MoveTreeLeaf board --19 seconds!!
-   | otherwise  = MoveTreeNode board $ listParSeq3 subTree
-      where subTree = map (genBoardTree depth (flipColor toPlay))
-                          $ genPossibleMoveBoards board toPlay
-
+   | otherwise  = MoveTreeNode board subTree -- $ listParSeq3 subTree
+      where newColor = flipColor toPlay
+            subTree = map (genBoardTree (depth-1) newColor)
+                          $ genPossibleMoveBoards board newColor
 
 
 getAiMove :: Board -> Color -> Int -> Maybe (Move, Int)
@@ -75,7 +105,10 @@ getAiMove board color depth =
        moveBoards = map snd movesAndBoards
        moves = map fst movesAndBoards
 
-       moveTrees = map (genBoardTree depth color) moveBoards
+       moveTrees' = map (genBoardTree depth color) moveBoards
+       moveTrees = --trace (showListLines moveTrees')
+                          moveTrees'
+
 
        boardRatings = map (minimax' depth getBoardScore isMaxi) moveTrees
 
@@ -90,20 +123,21 @@ getAiMove board color depth =
 
        moveAndBoardRatings3 = listFilterLeft moveAndBoardRatings2
 
-       goodMove = foldl (\acc pair@(move, rating)
-                           -> if not $ isJust acc
-                              then Just pair
-                              else let (Just (moveAcc, ratingAcc)) = acc
-                                   in if testSign rating ratingAcc
-                                      then Just pair
-                                      else acc)
-                        Nothing
-                        moveAndBoardRatings3
+       goodMove =
+         if null moveAndBoardRatings3
+         then Nothing
+         else Just $
+            foldl1 (\acc@(accMove, accRating) pair@(move, rating)
+                              -> if testSign rating accRating
+                                 then pair
+                                 else acc)
+                   moveAndBoardRatings3
 
-   {-in trace (L.intercalate "\n" $ map show moveAndBoardRatings3)
+   in if False --set to false to disable debug stuff
+      then trace (L.intercalate "\n" $ map show moveAndBoardRatings3)
             --("computer move:" ++ (show goodMove))
-            $ goodMove-}
-   in goodMove
+            $ goodMove
+      else goodMove
 
 
 

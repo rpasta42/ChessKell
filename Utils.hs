@@ -12,6 +12,7 @@ module Utils
 , matrixToDisplay, displayMatrix
 , matrixMap, matrixMap'
 , listParSeq2, listParSeq3, listParSeq4
+, showListLines
 ) where
 
 import qualified Data.Matrix as M
@@ -109,7 +110,7 @@ pairEitherToEitherPair (_     ,  Left x ) = Left x
 pairEitherToEitherPair (Right a, Right b) = Right $ (a, b)
 
 listFilterLeft :: [Either a b] -> [b]
-listFilterLeft lst = helper' lst []
+listFilterLeft lst = reverse $ helper' lst []
    where helper' [] acc = acc
          helper' ((Right x):xs) acc = helper' xs (x:acc)
          helper' (_:xs) acc = helper' xs acc
@@ -167,7 +168,7 @@ matrixMap' m f x y accM
       in matrixMap' m f (x+1) y newAccM
 
 
-
+showListLines x = concat . map show $ x
 
 
 

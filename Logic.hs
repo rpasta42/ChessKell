@@ -88,6 +88,7 @@ genPossibleMoveBoards2 board color =
    in boards5 --istParSeq2 boards5
 
 
+--mapM_ (displayMatrix . matrixToDisplay) $ map (\x -> displayBoardByColor x White) $ genPossibleMoveBoards newGame White
 genPossibleMoveBoards :: Board -> Color -> [Board]
 genPossibleMoveBoards board color =
    let allMoves1 = getPossibleMoves board color

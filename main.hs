@@ -8,6 +8,7 @@ import Logic
 import Ai
 import qualified Data.List as L
 import qualified Data.Char as C
+import System.Random
 import System.IO
 import System.Posix.Unistd (sleep)
 import Data.Either.Combinators (mapLeft)
@@ -15,7 +16,7 @@ import Debug.Trace
 
 --step newGame Nothing White (extractRight $ strToMove "a2,a4") Nothing
 
-botDepth = 3
+botDepth = 4
 
 --START NORMAL COMMAND LINE GAME
 
@@ -39,7 +40,11 @@ gameLoop board whosTurn = do
               putStrLn $ "\n\n================" ++ (show nextTurn) ++ "'s Turn\n"
               print $ displayBoardByColor newBoard nextTurn
 
-              let aiMove = getAiMove newBoard nextTurn botDepth
+              randomGen <- newStdGen
+              (randomNum, newGen) <- return $ random randomGen
+
+              let aiMove = getAiMove newBoard nextTurn botDepth (Just randomNum)
+
               aiEval <- putStrLn $ (show aiMove) ++ ": chosen computer move"
 
               gameLoop newBoard nextTurn
@@ -75,13 +80,17 @@ gameDriver = do
 
 --START BOT GAME
 
-getPlayerMoveBot board whosTurn =
-   fst . extractJust $ getAiMove board whosTurn botDepth
+getPlayerMoveBot board whosTurn = do
+   randomGen <- newStdGen
+   (randomNum, newGen) <- return $ random randomGen
+
+   return . fst . extractJust $ getAiMove board whosTurn botDepth (Just randomNum)
 
 gameLoopBot _ _ 0 = do return ()
 gameLoopBot board whosTurn n = do
-   let move = getPlayerMoveBot board whosTurn
-       newBoard' = step board Nothing whosTurn move
+   move <- getPlayerMoveBot board whosTurn
+
+   let newBoard' = step board Nothing whosTurn move
 
    if isRight newBoard'
    then let newBoard = extractRight newBoard'
@@ -167,9 +176,9 @@ pVeHelper board currColor botColor maybeMove = do
    else return ()
 
    if currColor == botColor && (not $ isJust maybeMove)
-   then let move = getPlayerMoveBot board currColor
-        in do putStrLn "#bot move"
-              pVeCheck board currColor botColor move
+   then do move <- getPlayerMoveBot board currColor
+           putStrLn "#bot move"
+           pVeCheck board currColor botColor move
    else do line <- getLine
            putStrLn $ "#got: " ++ line
 

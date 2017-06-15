@@ -87,8 +87,8 @@ genBoardTree depth toPlay board
                           $ genPossibleMoveBoards board newColor
 
 
-getAiMove :: Board -> Color -> Int -> Maybe (Move, Int)
-getAiMove board color depth =
+getAiMove :: Board -> Color -> Int -> Maybe Int -> Maybe (Move, Int)
+getAiMove board color depth random =
    let isMaxi = color == White
        testSign :: Ord a => a -> a -> Bool
        testSign = if isMaxi then (>) else (<)
@@ -112,7 +112,6 @@ getAiMove board color depth =
        moveTrees = --trace (showListLines moveTrees')
                           moveTrees'
 
-
        boardRatings = map (minimax' depth getBoardScore isMaxi) moveTrees
 
        moveAndBoardRatings1 = zip moves boardRatings
@@ -126,15 +125,37 @@ getAiMove board color depth =
 
        moveAndBoardRatings3 = listFilterLeft moveAndBoardRatings2
 
-       goodMove =
-         if null moveAndBoardRatings3
-         then Nothing
-         else Just $
+       goodMoveNormal =
             foldl1 (\acc@(accMove, accRating) pair@(move, rating)
                               -> if testSign rating accRating
                                  then pair
                                  else acc)
                    moveAndBoardRatings3
+
+       goodMoves :: Maybe ((Move, Int), [(Move, Int)])
+       goodMoves = foldl (\ maybeAcc pair@(move, rating)
+                           -> if isJust maybeAcc
+                              then let (acc@(accMove, accRating), rest) = extractJust maybeAcc
+                                   in if testSign rating accRating then Just (pair, [])
+                                      else if rating == accRating then Just (acc, pair:rest)
+                                      else maybeAcc
+                              else Just (pair, []))
+                         Nothing
+                         moveAndBoardRatings3
+
+       goodMove =
+         if null moveAndBoardRatings3
+         then Nothing
+         else if not $ isJust random
+              then Just goodMoveNormal
+              else let random' = extractJust random
+                       randomMoves@(acc, rest) = extractJust goodMoves
+                       randomMoves1 = acc : rest
+
+                       rMovesLength = length randomMoves1
+                       index = random' `mod` rMovesLength
+                       goodMove1 = randomMoves1 !! index
+                   in Just $ goodMove1
 
    in if False --set to false to disable debug stuff
       then trace (L.intercalate "\n" $ map show moveAndBoardRatings3)

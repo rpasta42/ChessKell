@@ -128,6 +128,8 @@ gameDriverBot = do
 --END BOT GAME
 
 
+--https://www.gnu.org/software/xboard/engine-intf.html#13
+
 --START PLAYER VS ENGINE
 
 xboardMoveToMove moveStr =

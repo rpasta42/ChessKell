@@ -50,7 +50,6 @@ compareAi f a b = case (a, b) of
    (Just a', Just b')   -> Just $ f a' b'
 
 
-
 minimax' :: (Ord b, Show b) => Int -> (a -> b) -> Bool -> MoveTree a -> Maybe b
 minimax' depth checkScore isMaxi moveTree =
    minimax depth checkScore moveTree isMaxi
@@ -87,10 +86,7 @@ minimax depth checkScore (MoveTreeNode board rest) isMaxi
 
       helper acc (x:xs) =
          let v = minimax (depth - 1) checkScore x newIsMaxi
-             newAcc = compareAi accPick acc v {-case (acc, v) of
-               (_, Nothing)            -> acc --trace "test1" $ acc
-               (Nothing, _)            -> v --trace "test2" $ v
-               (Just acc', Just v')    -> Just $ accPick acc' v'-}
+             newAcc = compareAi accPick acc v
          in helper newAcc xs
 
 
@@ -100,15 +96,10 @@ posMax = 100000
 alphabeta :: Int -> (a -> Int) -> Bool -> MoveTree a -> Int
 alphabeta depth checkScore isMaxi moveTree =
    alphabeta' depth negMax posMax checkScore isMaxi moveTree
-   --if isMaxi
-   --then alphabeta' negMax posMax depth checkScore isMaxi moveTree
-   --else alphabeta' posMax negMax depth checkScore isMaxi moveTree
-
-
 
 alphabeta' :: Int -> Int -> Int -> (a -> Int) -> Bool -> MoveTree a -> Int
 --alphabeta' a b depth checkScore isMaxi moveTree =
-alphabeta' _     _  _  checkScore _      (MoveTreeLeaf board) = checkScore board
+alphabeta' _ _ _ checkScore _ (MoveTreeLeaf board) = checkScore board
 alphabeta' depth a1 b1 checkScore isMaxi (MoveTreeNode board rest)
    | depth == 0 = checkScore board
    | otherwise =

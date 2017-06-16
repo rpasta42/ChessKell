@@ -169,7 +169,9 @@ matrixMap' m f x y accM
       in matrixMap' m f (x+1) y newAccM
 
 
-showListLines x = concat . map show $ x
+--showListLines x = concat . map show $ x
+showListLines x = L.intercalate "\n" . map show $ x
+
 
 substring :: String -> String -> Bool
 substring (x:xs) [] = False

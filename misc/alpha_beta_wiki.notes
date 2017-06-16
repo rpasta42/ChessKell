@@ -1,0 +1,55 @@
+
+https://en.wikipedia.org/wiki/File:AB_pruning.svg
+
+"It can happen that when choosing a certain branch
+of a certain node the minimum score that the
+minimizing player is assured of becomes less than
+the maximum score that the maximizing player is
+assured of (beta <= alpha). If this is the case,
+the parent node should not choose this node,
+because it will make the score for the parent node
+worse. Therefore, the other branches of the node
+do not have to be explored."
+
+
+- line is a move. so min can go for move that results in 5 or results in 6
+
+first cut:
+min knows that max parent would go for 5,
+since 4 < 5, so min can disregard that node
+
+second cut:
+min knows that max can get a 6 either way. so 9
+can be disregarded
+
+
+third cut (from top):
+if max chose last branch then min would be able to force 5.
+min knows that top parent would go for 6, so disregard third branch.
+
+
+
+
+
+
+########################################
+--old (bad)
+
+first cut:
+min knows that min knows that max can get at least a 6.
+Since 4 < 6, min will ignore that branch so max can disregard it.
+
+
+second cut:
+
+
+first cut: max knows that the least score min can get is 5
+min will see that 4 (move that max can make) is
+not good score for min, so max can disregard second 5
+
+second cut: min knows that max will get at least a 6.
+Since 6 on bottom row is not greater than 6, 9 can be disregarded
+
+third cut: min knows that max can get 5 (from first big branch).
+Since 5 = 5, max can disregard third branch.
+Therefore the rest of the branch can be cut off

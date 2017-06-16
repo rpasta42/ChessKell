@@ -88,10 +88,13 @@ genBoardTree depth toPlay board
 
 
 getAiMove :: Board -> Color -> Int -> Maybe Int -> Maybe (Move, Int)
-getAiMove board color depth random =
+getAiMove board color depth random' =
    let isMaxi = color == White
        testSign :: Ord a => a -> a -> Bool
        testSign = if isMaxi then (>) else (<)
+
+       random = random' -- for random moves
+       --random = Nothing --for non-random moves
 
        allMoves = getPossibleMoves board color
 
@@ -112,7 +115,9 @@ getAiMove board color depth random =
        moveTrees = --trace (showListLines moveTrees')
                           moveTrees'
 
-       boardRatings = map (minimax' depth getBoardScore isMaxi) moveTrees
+
+       {- --START minimax
+       boardRatings = map (minimax' depth getBoardScore (not isMaxi)) moveTrees
 
        moveAndBoardRatings1 = zip moves boardRatings
 
@@ -124,6 +129,13 @@ getAiMove board color depth random =
              moveAndBoardRatings1
 
        moveAndBoardRatings3 = listFilterLeft moveAndBoardRatings2
+       --END minimax -}
+
+       --START alpha-beta
+       boardRatings = map (alphabeta depth getBoardScore (not isMaxi))
+                          moveTrees
+       moveAndBoardRatings3 = zip moves boardRatings
+       --END alpha-beta
 
        goodMoveNormal =
             foldl1 (\acc@(accMove, accRating) pair@(move, rating)
@@ -157,9 +169,9 @@ getAiMove board color depth random =
                        goodMove1 = randomMoves1 !! index
                    in Just $ goodMove1
 
-   in if False --set to false to disable debug stuff
-      then trace (L.intercalate "\n" $ map show moveAndBoardRatings3)
-            --("computer move:" ++ (show goodMove))
+   in if True --set to false to disable debug stuff
+      then trace ("#" ++ (showListLines moveAndBoardRatings3)
+                  ++ "#computer move:" ++ (show goodMove))
             $ goodMove
       else goodMove
 

@@ -136,7 +136,7 @@ silent! normal! zE
 158,162fold
 163,169fold
 146,170fold
-174,186fold
+176,188fold
 19
 normal! zo
 75
@@ -145,12 +145,12 @@ normal! zo
 normal! zc
 146
 normal! zo
-let s:l = 44 - ((21 * winheight(0) + 16) / 32)
+let s:l = 176 - ((68 * winheight(0) + 17) / 34)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-44
-normal! 0
+176
+normal! 01|
 let &so = s:so_save | let &siso = s:siso_save
 doautoall SessionLoadPost
 " vim: set ft=vim :

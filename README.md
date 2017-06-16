@@ -17,9 +17,10 @@ Performance is decent with the default scan depth of 4, but starts getting slow 
 === TODO
 - [x] castling (works correctly)
 - [ ] en-passant
+   - [ ] add last move to the Board structure
 - [ ] pawn promotion
    - [x] always promotes to queen
    - [ ] promoting to other pieces is not yet implemented
 - [ ] heuristics for better picking moves
 - [ ] opening book
-
+- [ ] change Board structure to include list of possible moves so the work isn't duplicated and adding heuristics is simpler

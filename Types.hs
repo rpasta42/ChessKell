@@ -96,6 +96,7 @@ data BoardPiece = BoardPiece { getPiece :: Piece
 data Board = Board { getWhitePieces :: [BoardPiece]
                    , getBlackPieces :: [BoardPiece]
                    , getLastMove :: Maybe Move
+                   , getNextPlayer :: Color
                    } deriving (Show)
 
 

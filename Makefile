@@ -6,16 +6,16 @@ guiData=-mode MachineBlack
 build: #clean
 	ghc main.hs -O3 +RTS -N3 -s -RTS -threaded
 
+#player vs player command line
 run: build
 	time ./main hvh $(runflags)
 
-
-
-
+#player vs bot xboard
 gui: build
 	xboard -fcp "./main hve $(runflags)" -debug -debugMode true -engineDebugOutput 2 -debugFile xboard.log $(guiData) #; cat xboard.log
 
 
+#bot vs bot xboard
 gui2: build
 	./main eve $(runflags) | ./misc/gui/pxboard.sh
 

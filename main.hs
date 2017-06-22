@@ -388,7 +388,7 @@ test2 =
 main = do
    args <- getArgs
 
-   if length args == 2
+   if length args == 1
    then case (head args) of
          "hve" -> do System.IO.hSetBuffering System.IO.stdout System.IO.NoBuffering
                      System.IO.hSetBuffering System.IO.stdin System.IO.NoBuffering
@@ -397,7 +397,7 @@ main = do
                      gameDriver
          "eve" -> do System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering
                      gameDriverBot
-   else putStrLn "incorrect arguments"
+   else putStrLn $ "incorrect arguments" ++ (show . length $ args)
 
 
    --old code

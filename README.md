@@ -17,6 +17,12 @@ Performance is decent with the default scan depth of 4, but starts getting slow 
 
 `cabal install matrix either`
 
+--- Running
+
+`make gui`  - player vs bot xboard GUI
+`make run`  - player vs player terminal-only
+`make gui2` - bot vs bot xboard GUI
+
 --- TODO
 - [x] multi-threading
 - [x] castling (works correctly)

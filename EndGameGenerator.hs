@@ -5,12 +5,13 @@ data GameInstance = GameInstance { getGameBoard :: Board
                                  , getNextGameBoards :: Maybe [Board]
                                  , getGameMoves :: [Move]
                                  , getGamePieceMoves :: [PieceMoves]
-                                 , getNextPlayer :: Color
                                  }
 
 --new Utils
 
-makeGameInstance = undefined
+makeGameInstance board nextToPlay =
+   let moves = getPossibleMoves board nextToPlay
+       pieceMoves =
 
 --EndGameGenerator
 
@@ -21,6 +22,5 @@ data PieceCoord = PieceCoord Piece Coord Bool
 generateEndGames :: [BoardPiece] ->
 generateEndGames wPieces bPieces =
    let board = mkBoard
-
 
 

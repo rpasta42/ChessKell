@@ -22,14 +22,14 @@ import Debug.Trace
 
 newGame :: Board
 newGame =
-   let mkPawns row color = map (\x -> mkPiece color Pawn (x, row) False)
+   let mkPawns row color = map (\x -> mkPieceNoMoves color Pawn (x, row) False)
                                ['A'..'H']
        wPawns = mkPawns 2 White
        bPawns = mkPawns 7 Black
 
        otherPieces = [Rook .. King] ++ reverse [Rook .. Bishop]
        mkOtherPieces color y = map (\(piece, x)
-                                       -> mkPiece color piece (x, y) False)
+                                       -> mkPieceNoMoves color piece (x, y) False)
                                    $ zip otherPieces ['A'..'H']
        wOtherPieces = mkOtherPieces White 1
        bOtherPieces = mkOtherPieces Black 8
@@ -37,7 +37,10 @@ newGame =
        --extraRook = [mkPiece Black Rook ('D', 4) False]
        extraRook = []
 
-       board = mkBoard (wPawns++wOtherPieces) (bPawns++bOtherPieces ++ extraRook)
+       wPieces = wPawns ++ wOtherPieces
+       bPieces = bPawns ++ bOtherPieces ++ extraRook
+
+       board = mkBoard wPieces bPieces
    in board
    --in extractRight $ (removePieceByPos' ('D', 2) board)
    --in extractRight $ (removePieceByPos' ('A', 2) board >>= removePieceByPos' ('B', 2))
@@ -397,6 +400,131 @@ getPieceMoves' b bPiece =
 
 isMoveOnBoard :: Coord -> Bool
 isMoveOnBoard (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
+
+
+
+---START addPieceToBoard and setPieceMoves (piece stores pieceMoves)
+
+addPieceToBoard :: Board -> BoardPiece -> Board
+addPieceToBoard board bPiece =
+   let testBoard = addPieceToBoard' board bPiece
+       pieceMoves = getPieceMoves board bPiece
+       newPiece = if isRight pieceMoves
+                  then setPieceMoves bPiece $ extractRight pieceMoves
+                  else pieceMoves
+       newBoard = addPieceToBoard' board newPiece
+   in newBoard
+
+addPieceToBoard' :: Board -> BoardPiece -> Board
+addPieceToBoard' board@(Board { getWhitePieces=wPieces
+                              , getBlackPieces=bPieces
+                              })
+                 bPiece =
+   if getColor bPiece == White
+   then mkBoard (bPiece : wPieces) bPieces
+   else mkBoard wPieces (bPiece : bPieces)
+
+setPieceMoves :: BoardPiece -> [Move] -> BoardPiece
+setPieceMoves (BoardPiece { getPiece = piece
+                          , getColor = color
+                          , getPosition = pos
+                          , getHaveMoved = haveMoved
+                          })
+              moves =
+   mkPiece color piece pos haveMoved $ Just moves
+
+getPieceMovesForBoard :: Board -> Board
+getPieceMovesForBoard b@(Board { getWhitePieces = wPieces
+                               , getBlackPieces = bPieces
+                               , getNextPlayer = color
+                               , getLastMove = lastMove
+                               }) =
+   let nextPieces = if color == White then wPieces else bPieces
+       moves = map (getPieceMoves b) nextPieces
+   in foldl (\board pMoves@(piece, caps, moves) ->
+                  let
+
+
+
+
+
+
+--END addPieceToBoard and setPieceMoves (piece stores pieceMoves)
+
+
+
+---START movePiece (also promotePawn, castlePlz)
+
+movePiece' :: Board -> Position -> PieceMoves
+           -> BoardPiece -> ChessRet Board
+movePiece' b newPos pMoves piece = movePiece b piece pMoves newPos
+
+
+promotePawn :: Board -> BoardPiece -> Position -> Board
+promotePawn board
+            bPiece@(BoardPiece {getPiece=p, getColor=c, getPosition=pos})
+            newPos@(x, y) =
+   let newBoard = removePieceAtPos board pos
+       newBoardW = getWhitePieces newBoard
+       newBoardB = getBlackPieces newBoard
+       newPiece = mkPiece c Queen newPos True
+   in if c == White
+      then mkBoard (newPiece : newBoardW) newBoardB
+      else mkBoard newBoardW (newPiece : newBoardB)
+
+--only do the rook dance, movePiece already takes care of moving king
+castlePlz :: Board -> Color -> Bool -> Board
+castlePlz board color isKingSide =
+   let y = if color == White then 1 else 8
+       startX = if isKingSide then 'H' else 'A'
+       endX = if isKingSide then 'F' else 'D'
+
+       oldPos = (startX, y)
+       newPos = (endX, y)
+
+       newBoard1 = removePieceAtPos board oldPos
+
+       newPiece = mkPiece color Rook newPos True Nothing
+
+       wPieces = getWhitePieces newBoard1
+       bPieces = getBlackPieces newBoard1
+   in addPieceToBoard newBoard1 newPiece
+
+
+--no checks for valid moves
+movePiece :: Board -> BoardPiece -> PieceMoves
+          -> Position -> ChessRet Board
+movePiece board
+          piece@(BoardPiece {getPiece=p, getColor=c, getPosition=(x,y)})
+          pMoves
+          newPos@(destX,destY) =
+   let newBoard' = removePieceAtPos board newPos
+
+       isCastle = p == King && x == 'E' && (destX == 'G' || destX == 'C')
+       isCastleK = destX == 'G'
+       newBoard = if not isCastle then newBoard' else castlePlz newBoard' c isCastleK
+
+       newPiece = mkPiece c p newPos True
+       wPieces = getWhitePieces newBoard
+       bPieces = getBlackPieces newBoard
+       wIndex = L.elemIndex piece wPieces
+       bIndex = L.elemIndex piece bPieces
+       isIllegal = isIllegalMove pMoves newPos
+       isPawnAtLast = p == Pawn && ((c == White && destY == 8) || (c == Black && destY == 1))
+   in case (wIndex, bIndex, isIllegal, isPawnAtLast) of
+         (_, _, True, _) -> Left $ "illegal move!!"
+         (_, _, _, True) -> Right $ promotePawn board piece newPos
+         (Just wIndex', Nothing, _, _) ->
+            Right $ mkBoard (replaceLstIndex wPieces wIndex' newPiece)
+                            bPieces
+         (Nothing, Just bIndex', _, _) ->
+            Right $ mkBoard wPieces
+                            (replaceLstIndex bPieces bIndex' newPiece)
+         _ -> Left $ "movePiece pattern fail: piece not found"
+                     ++ " or both in black/white"
+
+---END movePiece (also promotePawn, castlePlz)
+
 
 
 {-old stuff

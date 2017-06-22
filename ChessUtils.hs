@@ -1,15 +1,15 @@
 module ChessUtils
 ( posToCoord, coordToPos, moveToStr
 , boardToMatrix, displayBoardByColor
-, mkPiece, mkBoard
+, mkPiece, mkPieceNoMoves, mkBoard
 , getAllBoardPieces, getBoardPieceByPos, getBoardPieceByCoord
 , getBoardPieceByPiece
 , getPieceCoord
 , removePiece, removePieceByPos
-, movePiece, movePiece'
 , pieceMovesToMoves
 , flipColor
 , coordEq
+, removePieceAtPos, isIllegalMove
 ) where
 
 --imports
@@ -73,20 +73,26 @@ displayBoardByColor b c =
       in if c == Black then ret1 else ret2
 
 
-mkPiece color piece pos moved =
+mkPiece color piece pos moved moves =
    BoardPiece { getColor = color
               , getPiece = piece
               , getPosition = pos
               , getHaveMoved = moved
+              , getMoves = moves
               }
 
 mkPieceW = mkPiece White
 mkPieceB = mkPiece Black
 
-mkBoard whitePieces blackPieces =
+mkPieceNoMoves color piece pos moved =
+   mkPiece color piece pos moved Nothing
+
+
+mkBoard whitePieces blackPieces lastMove nextToMove =
    Board { getWhitePieces=whitePieces
          , getBlackPieces=blackPieces
-         , getLastMove=Nothing
+         , getLastMove=lastMove
+         , getNextPlayer=nextToMove
          }
 
 
@@ -139,9 +145,7 @@ removePieceByPos board pos =
 
 
 
-movePiece' :: Board -> Position -> PieceMoves
-           -> BoardPiece -> ChessRet Board
-movePiece' b newPos pMoves piece = movePiece b piece pMoves newPos
+---START stuff needed by movePiece
 
 isIllegalMove :: PieceMoves -> Position -> Bool
 isIllegalMove pMoves@(_, captures, moves) destPos =
@@ -149,73 +153,6 @@ isIllegalMove pMoves@(_, captures, moves) destPos =
        destCoord = posToCoord destPos
        isLegal = destCoord `elem` allCoords
    in not isLegal
-
-promotePawn :: Board -> BoardPiece -> Position -> Board
-promotePawn board
-            bPiece@(BoardPiece {getPiece=p, getColor=c, getPosition=pos})
-            newPos@(x, y) =
-   let newBoard = removePieceAtPos board pos
-       newBoardW = getWhitePieces newBoard
-       newBoardB = getBlackPieces newBoard
-       newPiece = mkPiece c Queen newPos True
-   in if c == White
-      then mkBoard (newPiece : newBoardW) newBoardB
-      else mkBoard newBoardW (newPiece : newBoardB)
-
---only do the rook dance, movePiece already takes care of king
-castlePlz :: Board -> Color -> Bool -> Board
-castlePlz board color isKingSide =
-   let y = if color == White then 1 else 8
-       startX = if isKingSide then 'H' else 'A'
-       endX = if isKingSide then 'F' else 'D'
-
-       oldPos = (startX, y)
-       newPos = (endX, y)
-
-       newPiece = mkPiece color Rook newPos True
-
-       newBoard1 = removePieceAtPos board oldPos
-
-       wPieces = getWhitePieces newBoard1
-       bPieces = getBlackPieces newBoard1
-   in if color == White
-      then mkBoard (newPiece : wPieces) bPieces
-      else mkBoard wPieces (newPiece : bPieces)
-
-
-
---no checks for valid moves
-movePiece :: Board -> BoardPiece -> PieceMoves
-          -> Position -> ChessRet Board
-movePiece board
-          piece@(BoardPiece {getPiece=p, getColor=c, getPosition=(x,y)})
-          pMoves
-          newPos@(destX,destY) =
-   let newBoard' = removePieceAtPos board newPos
-
-       isCastle = p == King && x == 'E' && (destX == 'G' || destX == 'C')
-       isCastleK = destX == 'G'
-       newBoard = if not isCastle then newBoard' else castlePlz newBoard' c isCastleK
-
-       newPiece = mkPiece c p newPos True
-       wPieces = getWhitePieces newBoard
-       bPieces = getBlackPieces newBoard
-       wIndex = L.elemIndex piece wPieces
-       bIndex = L.elemIndex piece bPieces
-       isIllegal = isIllegalMove pMoves newPos
-       isPawnAtLast = p == Pawn && ((c == White && destY == 8) || (c == Black && destY == 1))
-   in case (wIndex, bIndex, isIllegal, isPawnAtLast) of
-         (_, _, True, _) -> Left $ "illegal move!!"
-         (_, _, _, True) -> Right $ promotePawn board piece newPos
-         (Just wIndex', Nothing, _, _) ->
-            Right $ mkBoard (replaceLstIndex wPieces wIndex' newPiece)
-                            bPieces
-         (Nothing, Just bIndex', _, _) ->
-            Right $ mkBoard wPieces
-                            (replaceLstIndex bPieces bIndex' newPiece)
-         _ -> Left $ "movePiece pattern fail: piece not found"
-                     ++ " or both in black/white"
-
 
 removePieceAtPos :: Board -> Position -> Board
 removePieceAtPos b pos =
@@ -229,6 +166,9 @@ removePieceAtPos b pos =
             then mkBoard (extractRight $ deleteLstItem wPieces piece) bPieces
             else mkBoard wPieces (extractRight $ deleteLstItem bPieces piece)
 
+---END stuff needed by movePiece
+
+
 
 pieceMovesToMoves :: PieceMoves -> [Move]
 pieceMovesToMoves pMoves@(bPiece, caps, moves) =
@@ -238,7 +178,6 @@ pieceMovesToMoves pMoves@(bPiece, caps, moves) =
        allMoves = map (\x -> Move (pStartPos, x))
                       allDestsPos
    in allMoves
-
 
 
 

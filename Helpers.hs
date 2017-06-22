@@ -4,10 +4,13 @@ module Helpers
 , coordEq
 , getPieceCoord
 , pieceMovesTo2
+, isCoordOnBoard
+, elem'
 ) where
 
 import qualified Data.Matrix as M
 import qualified Data.Char as C
+import qualified Data.List as L
 import Types
 
 
@@ -26,9 +29,6 @@ numToChr x = C.chr $ C.ord '0' + x
 moveToStr (Move ((x1, y1), (x2,y2))) =
    [C.toLower x1] ++ [numToChr y1] ++ [C.toLower x2] ++ [numToChr y2]
 
-
-
-
 --small funcs
 
 flipColor :: Color -> Color
@@ -44,5 +44,9 @@ getPieceCoord p = posToCoord $ getPosition p
 pieceMovesTo2 :: PieceMoves -> PieceMoves2
 pieceMovesTo2 (_, caps, moves) = (caps, moves)
 
+isCoordOnBoard :: Coord -> Bool
+isCoordOnBoard (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
 
+elem' :: (Eq a, Foldable t) => t a -> a -> Bool
+elem' = flip L.elem
 

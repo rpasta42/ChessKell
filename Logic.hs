@@ -6,7 +6,6 @@ module Logic
 , isUnderCheck
 , getPieceCaptures
 , getPieceMoves, getPieceMoves' --' for testing
-, isMoveOnBoard
 , movePiece, movePiece'
 ) where
 
@@ -46,76 +45,6 @@ newGame =
    in board
    --in extractRight $ (removePieceByPos' ('D', 2) board)
    --in extractRight $ (removePieceByPos' ('A', 2) board >>= removePieceByPos' ('B', 2))
-
-
-getPossibleMoves :: Board -> Color -> [PieceMoves]
-getPossibleMoves b White = listFilterLeft $ getPossibleMoves' b (getWhitePieces b) []
-getPossibleMoves b Black = listFilterLeft $ getPossibleMoves' b (getBlackPieces b) []
-
-getPossibleMoves' :: Board -> [BoardPiece] -> [ChessRet PieceMoves] -> [ChessRet PieceMoves]
-getPossibleMoves' b [] acc = acc
-getPossibleMoves' b bPieces@(x:xs) acc =
-   let pieceMoves1 = getPieceMoves b x
-       pieceMoves2 = pieceMoves1 --(\ (caps, moves) -> (x, caps, moves)) <$> pieceMoves1
-   in getPossibleMoves' b xs (pieceMoves2 : acc)
-
---for genPossibleMoveBoards and getMatesAndStales
-getMoveBoards' :: Board -> [PieceMoves] -> [[ChessRet Board]]
-getMoveBoards' board moves =
-   map (\pMoves@(bPiece, caps, moves)
-         ->    (map (mvPiece board bPiece pMoves) caps)
-            ++ (map (mvPiece board bPiece pMoves) moves))
-       moves
-      where mvPiece b bPiece pMoves coord = movePiece b bPiece pMoves $ coordToPos coord
-
-genPossibleMoveBoards2 :: Board -> Color -> [(Move, Board)]
-genPossibleMoveBoards2 board color =
-   let allMoves1 = getPossibleMoves board color
-       allMoves2 = trace ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves1))
-                         $ allMoves1
-
-       allMoves = allMoves1 --change this to allMoves2 for debug
-
-       boards1 = getMoveBoards' board allMoves
-
-       boards2 = zip boards1 allMoves
-
-       boards3 = map (\ (boards, pMoves) -> zip (pieceMovesToMoves pMoves) boards)
-                     boards2
-
-       boards4 = map (\ (pos, eitherBoard) ->
-                           if isRight eitherBoard
-                           then Right $ (pos, extractRight eitherBoard)
-                           else Left "empty board")
-                     (concat boards3)
-
-       boards5 = listFilterLeft boards4
-
-       {-boards6 = map (\ (pos, board) ->
-                           if extractRight $ isUnderCheck color board
-                           then Left "can't go under check"
-                           else Right (pos, board))
-                     boards5
-
-       boards7 = listFilterLeft boards6-}
-
-   in boards5 --istParSeq2 boards5
-
-
---mapM_ (displayMatrix . matrixToDisplay) $ map (\x -> displayBoardByColor x White) $ genPossibleMoveBoards newGame White
-genPossibleMoveBoards :: Board -> Color -> [Board]
-genPossibleMoveBoards board color =
-   let allMoves1 = getPossibleMoves board color
-       allMoves2 = trace ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves1))
-                         $ allMoves1
-       allMoves = allMoves1 --change this to allMoves2 for debug
-
-       boards1 = getMoveBoards' board allMoves
-       boards2 = listFilterLeft $ concat boards1
-
-       --boards3 = listParSeq2 $ filter (\ x -> not . extractRight $ isUnderCheck color x) boards2
-
-   in boards2
 
 
 --color -- next to move color to check for checkmate
@@ -171,6 +100,23 @@ isUnderCheck colorToCheck board@(Board { getWhitePieces=wPieces, getBlackPieces=
          Black -> bUnderCheck
 
 
+
+---START getPossibleMoves, getPieceCaptures, getPieceMoves, getCastleMoves, getPieceMoves'
+
+--all the moves on the board
+getPossibleMoves :: Board -> Color -> [PieceMoves]
+getPossibleMoves b White = listFilterLeft $ getPossibleMoves' b (getWhitePieces b) []
+getPossibleMoves b Black = listFilterLeft $ getPossibleMoves' b (getBlackPieces b) []
+
+getPossibleMoves' :: Board -> [BoardPiece] -> [ChessRet PieceMoves] -> [ChessRet PieceMoves]
+getPossibleMoves' b [] acc = acc
+getPossibleMoves' b bPieces@(x:xs) acc =
+   let pieceMoves1 = getPieceMoves b x
+       pieceMoves2 = pieceMoves1 --(\ (caps, moves) -> (x, caps, moves)) <$> pieceMoves1
+   in getPossibleMoves' b xs (pieceMoves2 : acc)
+
+
+
 {-getPieceCaptures :: Board -> [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
 --takes board and bPiece and returns a pair:
 --fst: with list of all pieces it can capture, and
@@ -215,13 +161,13 @@ getPieceCaptures b moves
                 colorC2 = (\x -> getColor x) <$> pieceAtC2
 
                 goodP1 = case colorC1 of
-                  Right color -> if color /= c && (isMoveOnBoard $ extractRight cap1)
+                  Right color -> if color /= c && (isCoordOnBoard $ extractRight cap1)
                                  then cap1
                                  else Left "bad"
                   Left x -> Left "bad"
 
                 goodP2 = case colorC2 of
-                  Right color -> if color /= c && (isMoveOnBoard $ extractRight cap2)
+                  Right color -> if color /= c && (isCoordOnBoard $ extractRight cap2)
                                  then cap2
                                  else Left "bad"
                   Left x -> Left "bad"
@@ -268,7 +214,7 @@ getPieceMoves :: Board -> BoardPiece -> ChessRet PieceMoves --([Coord], [Coord])
 getPieceMoves board bPiece =
    let pPiece = getPiece bPiece
        pCoord = getPieceCoord bPiece
-       pieceMoves1 = map (filter isMoveOnBoard) $ getPieceMoves' board bPiece
+       pieceMoves1 = map (filter isCoordOnBoard) $ getPieceMoves' board bPiece
        pieceMoves2 = map (filter (not . coordEq pCoord)) pieceMoves1
        pieceMoves3 = pieceMoves2 --map (filter (not . putUnderCheck board)) pieceMoves2
        pieceMoves4 = pieceMoves3 --map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
@@ -400,9 +346,74 @@ getPieceMoves' b bPiece =
 
    in helper' piece $ posToCoord pos
 
-isMoveOnBoard :: Coord -> Bool
-isMoveOnBoard (x,y) = x >= 1 && x <= 8 && y >= 1 && y <= 8
 
+---END getPossibleMoves, getPieceCaptures, getPieceMoves, getCastleMoves, getPieceMoves'
+
+
+
+---START getMoveBoards' genPossibleMoveBoards2 genPossibleMoveBoards
+
+--for genPossibleMoveBoards and getMatesAndStales
+getMoveBoards' :: Board -> [PieceMoves] -> [[ChessRet Board]]
+getMoveBoards' board moves =
+   map (\pMoves@(bPiece, caps, moves)
+         ->    (map (mvPiece board bPiece pMoves) caps)
+            ++ (map (mvPiece board bPiece pMoves) moves))
+       moves
+      where mvPiece b bPiece pMoves coord = movePiece b bPiece pMoves $ coordToPos coord
+
+
+genPossibleMoveBoards2 :: Board -> Color -> [(Move, Board)]
+genPossibleMoveBoards2 board color =
+   let allMoves1 = getPossibleMoves board color
+       allMoves2 = trace ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves1))
+                         $ allMoves1
+
+       allMoves = allMoves1 --change this to allMoves2 for debug
+
+       boards1 = getMoveBoards' board allMoves
+
+       boards2 = zip boards1 allMoves
+
+       boards3 = map (\ (boards, pMoves) -> zip (pieceMovesToMoves pMoves) boards)
+                     boards2
+
+       boards4 = map (\ (pos, eitherBoard) ->
+                           if isRight eitherBoard
+                           then Right $ (pos, extractRight eitherBoard)
+                           else Left "empty board")
+                     (concat boards3)
+
+       boards5 = listFilterLeft boards4
+
+       {-boards6 = map (\ (pos, board) ->
+                           if extractRight $ isUnderCheck color board
+                           then Left "can't go under check"
+                           else Right (pos, board))
+                     boards5
+
+       boards7 = listFilterLeft boards6-}
+
+   in boards5 --istParSeq2 boards5
+
+
+--mapM_ (displayMatrix . matrixToDisplay) $ map (\x -> displayBoardByColor x White) $ genPossibleMoveBoards newGame White
+genPossibleMoveBoards :: Board -> Color -> [Board]
+genPossibleMoveBoards board color =
+   let allMoves1 = getPossibleMoves board color
+       allMoves2 = trace ("\nmoves:" ++ (L.intercalate "\n" $ (map show) allMoves1))
+                         $ allMoves1
+       allMoves = allMoves1 --change this to allMoves2 for debug
+
+       boards1 = getMoveBoards' board allMoves
+       boards2 = listFilterLeft $ concat boards1
+
+       --boards3 = listParSeq2 $ filter (\ x -> not . extractRight $ isUnderCheck color x) boards2
+
+   in boards2
+
+
+---END getMoveBoards' genPossibleMoveBoards2 genPossibleMoveBoards
 
 
 ---START addPieceToBoard and setPieceMoves (piece stores pieceMoves)
@@ -464,13 +475,6 @@ getPieceMovesForBoard b@(Board { getWhitePieces = wPieces
          else (wPieces, bPieces)
 
    in mkBoard newPiecesW newPiecesB lastMove color
-
-
-
-
-
-
-
 
 
 --END addPieceToBoard and setPieceMoves (piece stores pieceMoves)
@@ -574,6 +578,5 @@ putUnderCheck board to = True
 --misc Utils/tools:
 
 removePieceByPos' = flip removePieceByPos
-elem' = flip L.elem
 
 

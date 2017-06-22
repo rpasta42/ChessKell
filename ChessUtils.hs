@@ -58,7 +58,6 @@ newGameBoard =
    in board2
 
 
-
 mkPiece color piece pos moved moves =
    BoardPiece { getColor = color
               , getPiece = piece
@@ -141,13 +140,6 @@ removePieceByPos board pos =
 
 ---START stuff needed by movePiece
 
-isIllegalMove :: PieceMoves -> Position -> Bool
-isIllegalMove pMoves@(_, captures, moves) destPos =
-   let allCoords = captures ++ moves
-       destCoord = posToCoord destPos
-       isLegal = destCoord `elem` allCoords
-   in not isLegal
-
 removePieceAtPos :: Board -> Position -> Board
 removePieceAtPos b pos =
    case getBoardPieceByPos b pos of
@@ -167,6 +159,13 @@ removePieceAtPos b pos =
                          (extractRight $ deleteLstItem bPieces piece)
                          lastMove
                          nextPlayer
+
+isIllegalMove :: PieceMoves -> Position -> Bool
+isIllegalMove pMoves@(_, captures, moves) destPos =
+   let allCoords = captures ++ moves
+       destCoord = posToCoord destPos
+       isLegal = destCoord `elem` allCoords
+   in not isLegal
 
 ---END stuff needed by movePiece
 

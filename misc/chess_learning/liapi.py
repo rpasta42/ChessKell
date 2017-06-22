@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+#dependency:
 #sudo pip3 install python-chess
 
 import sh, json

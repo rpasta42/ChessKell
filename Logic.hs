@@ -13,6 +13,7 @@ module Logic
 import Types
 import Utils
 import ChessUtils
+import Helpers
 import qualified Data.List as L
 import qualified Data.Char as C
 import System.IO

@@ -4,6 +4,7 @@
 import Types
 import Utils
 import ChessUtils
+import Helpers
 import Logic
 import Ai
 import qualified Data.List as L
@@ -399,17 +400,6 @@ main = do
                      gameDriverBot
    else putStrLn $ "incorrect arguments" ++ (show . length $ args)
 
-
-   --old code
-   --default for person vs person or bot vs bot
-   --System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering --System.IO.NoBuffering
-
-
-   --bot vs player
-
-   --gameDriverBot
-   --personVsEngineSetup
-   --gameDriver
 
 
 

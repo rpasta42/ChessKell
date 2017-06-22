@@ -8,7 +8,7 @@ module Ai
 
 
 import qualified Data.List as L
-import ChessUtils (flipColor)
+import Helpers (flipColor)
 import Types
 import Utils
 import Logic

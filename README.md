@@ -13,8 +13,11 @@ Chesskell is a fun side-project and is not meant to compete with other modern ch
 
 Performance is decent with the default scan depth of 4, but starts getting slow when using 5-move scan-depth.
 
+--- Installation
 
-=== TODO
+`cabal install matrix either`
+
+--- TODO
 - [x] multi-threading
 - [x] castling (works correctly)
 - [ ] en-passant

@@ -10,6 +10,7 @@ module ChessUtils
 , flipColor
 , coordEq
 , removePieceAtPos, isIllegalMove
+, pieceMovesTo2
 ) where
 
 --imports
@@ -131,11 +132,13 @@ removePiece :: Board -> BoardPiece -> ChessRet Board
 removePiece b p@(BoardPiece { getColor=c, getPosition=pos }) =
    let wPieces = getWhitePieces b
        bPieces = getBlackPieces b
+       lastMove = getLastMove b
+       nextPlayer = getNextPlayer b
        newPieces' = case c of
           White -> (deleteLstItem wPieces p, Right bPieces)
           Black -> (Right wPieces, deleteLstItem bPieces p)
        newPieces = pairEitherToEitherPair newPieces'
-       newBoard = mkBoardFromPair <$> newPieces
+       newBoard = mkBoardFromPair lastMove nextPlayer <$> newPieces
    in newBoard
 
 removePieceByPos :: Board -> Position -> ChessRet Board
@@ -162,9 +165,17 @@ removePieceAtPos b pos =
          let color = getColor piece
              wPieces = getWhitePieces b
              bPieces = getBlackPieces b
+             nextPlayer = getNextPlayer b
+             lastMove = getLastMove b
          in if color == White
-            then mkBoard (extractRight $ deleteLstItem wPieces piece) bPieces
-            else mkBoard wPieces (extractRight $ deleteLstItem bPieces piece)
+            then mkBoard (extractRight $ deleteLstItem wPieces piece)
+                         bPieces
+                         lastMove
+                         nextPlayer
+            else mkBoard wPieces
+                         (extractRight $ deleteLstItem bPieces piece)
+                         lastMove
+                         nextPlayer
 
 ---END stuff needed by movePiece
 
@@ -195,7 +206,11 @@ getPieceCoord p = posToCoord $ getPosition p
 boardToMatrix :: Board -> M.Matrix String
 boardToMatrix b = displayBoardByColor b White
 
-mkBoardFromPair (wPieces, bPieces) = mkBoard wPieces bPieces
+mkBoardFromPair lastMove nextPlayer
+                (wPieces, bPieces) =
+   mkBoard wPieces bPieces lastMove nextPlayer
 
+pieceMovesTo2 :: PieceMoves -> PieceMoves2
+pieceMovesTo2 (_, caps, moves) = (caps, moves)
 
 

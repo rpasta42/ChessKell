@@ -8,6 +8,7 @@ import Logic
 import Ai
 import qualified Data.List as L
 import qualified Data.Char as C
+import System.Environment
 import System.Random
 import System.IO
 import System.Posix.Unistd (sleep)
@@ -385,16 +386,29 @@ test2 =
 
 --main = test2
 main = do
+   args <- getArgs
+
+   if length args == 2
+   then case (head args) of
+         "hve" -> do System.IO.hSetBuffering System.IO.stdout System.IO.NoBuffering
+                     System.IO.hSetBuffering System.IO.stdin System.IO.NoBuffering
+                     personVsEngineSetup
+         "hvh" -> do System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering
+                     gameDriver
+         "eve" -> do System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering
+                     gameDriverBot
+   else putStrLn "incorrect arguments"
+
+
+   --old code
    --default for person vs person or bot vs bot
    --System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering --System.IO.NoBuffering
 
 
    --bot vs player
-   System.IO.hSetBuffering System.IO.stdout System.IO.NoBuffering
-   System.IO.hSetBuffering System.IO.stdin System.IO.NoBuffering
 
    --gameDriverBot
-   personVsEngineSetup
+   --personVsEngineSetup
    --gameDriver
 
 

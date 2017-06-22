@@ -32,8 +32,8 @@ setlocal nodiff
 setlocal equalprg=
 setlocal errorformat=
 setlocal expandtab
-if &filetype != 'haskell'
-setlocal filetype=haskell
+if &filetype != 'python'
+setlocal filetype=python
 endif
 setlocal fixendofline
 setlocal foldcolumn=0
@@ -92,13 +92,13 @@ setlocal statusline=
 setlocal suffixesadd=
 setlocal swapfile
 setlocal synmaxcol=3000
-if &syntax != 'haskell'
-setlocal syntax=haskell
+if &syntax != 'python'
+setlocal syntax=python
 endif
 setlocal tabstop=6
 setlocal tagcase=
 setlocal tags=
-setlocal textwidth=290
+setlocal textwidth=50
 setlocal thesaurus=
 setlocal noundofile
 setlocal undolevels=-123456
@@ -107,24 +107,14 @@ setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
-1,12fold
-22,29fold
-31,38fold
-42,53fold
-55,85fold
-90,95fold
-97,101fold
-110,114fold
-90
-normal! zo
-97
-normal! zo
-let s:l = 94 - ((55 * winheight(0) + 16) / 32)
+14,43fold
+57,66fold
+let s:l = 3 - ((2 * winheight(0) + 33) / 67)
 if s:l < 1 | let s:l = 1 | endif
 exe s:l
 normal! zt
-94
-normal! 050|
+3
+normal! 012|
 let &so = s:so_save | let &siso = s:siso_save
 doautoall SessionLoadPost
 " vim: set ft=vim :

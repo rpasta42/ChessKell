@@ -1,10 +1,12 @@
 
+
+buildFlags=+RTS -N3 -s -RTS -rtsopts
 runflags=+RTS -N3
 guiData=-mode MachineBlack
 #guiData=-mode MachineWhite
 
 build: #clean
-	ghc main.hs -O3 +RTS -N3 -s -RTS -threaded
+	ghc main.hs -O3 $(buildFlags) -threaded
 
 #player vs player command line
 run: build

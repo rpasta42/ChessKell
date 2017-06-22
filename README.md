@@ -1,6 +1,6 @@
 
 
-Chess engine written in Haskell.
+## Chess engine written in Haskell.
 
 There are 3 supported game modes:
 - human vs human with computer evaluation for the best move (terminal-only)
@@ -13,17 +13,19 @@ Chesskell is a fun side-project and is not meant to compete with other modern ch
 
 Performance is decent with the default scan depth of 4, but starts getting slow when using 5-move scan-depth.
 
---- Installation
+#### Installation
 
 `cabal install matrix either`
 
---- Running
+#### Running
 
 `make gui`  - player vs bot xboard GUI
+
 `make run`  - player vs player terminal-only
+
 `make gui2` - bot vs bot xboard GUI
 
---- TODO
+### TODO
 - [x] multi-threading
 - [x] castling (works correctly)
 - [ ] en-passant

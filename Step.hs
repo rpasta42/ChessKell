@@ -1,5 +1,6 @@
 module Step
 ( step
+, processAfterStep
 ) where
 
 import Types
@@ -12,9 +13,10 @@ import Data.Either.Combinators (mapLeft)
 
 --current player color = p1, other player = p2
 --current board: currMove, board after move: nextMove
-step :: Board -> Maybe Piece -> Color -> Move -> Either StepFailure Board
-step board pawnPromo color (Move (from, to)) =
-   do let nextColor = flipColor color
+step :: Board -> Maybe Piece -> Move -> Either StepFailure Board
+step board pawnPromo (Move (from, to)) =
+   do let color = getNextPlayer board
+          nextColor = flipColor color
           toCoord = posToCoord to
 
       piece <- mapLeft (\errStr -> IsPieceNotFound $ "empty square selected: " ++ errStr)
@@ -54,5 +56,13 @@ step board pawnPromo color (Move (from, to)) =
             (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"
             (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
             _ -> Right newBoard
+
+
+processAfterStep :: Board -> Either StepFailure Board
+processAfterStep board =
+   let newColorBoard = flipBoardColor board
+   in Right $ getPieceMovesForBoard newColorBoard
+
+
 
 

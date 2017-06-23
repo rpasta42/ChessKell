@@ -6,6 +6,7 @@ module Logic
 , isUnderCheck
 , getPieceCaptures
 , getPieceMoves, getPieceMoves' --' for testing
+, addPieceToBoard, getPieceMovesForBoard
 , movePiece, movePiece'
 ) where
 
@@ -415,9 +416,7 @@ genPossibleMoveBoards board color =
 ---END getMoveBoards' genPossibleMoveBoards2 genPossibleMoveBoards
 
 
----START addPieceToBoard and setPieceMoves (piece stores pieceMoves)
-
-
+---START addPieceToBoard getPieceMovesForBoard (piece stores pieceMoves)
 
 --gets all the moves and adds to board
 addPieceToBoard :: Board -> BoardPiece -> Board
@@ -441,14 +440,6 @@ addPieceToBoard' board@(Board { getWhitePieces=wPieces
    then mkBoard (bPiece : wPieces) bPieces lastMove nextPlayer
    else mkBoard wPieces (bPiece : bPieces) lastMove nextPlayer
 
-setPieceMoves :: BoardPiece -> PieceMoves2 -> BoardPiece
-setPieceMoves (BoardPiece { getPiece = piece
-                          , getColor = color
-                          , getPosition = pos
-                          , getHaveMoved = haveMoved
-                          })
-              moves =
-   mkPiece color piece pos haveMoved $ Just moves
 
 --gets all moves for member BoardPieces
 getPieceMovesForBoard :: Board -> Board
@@ -459,24 +450,27 @@ getPieceMovesForBoard b@(Board { getWhitePieces = wPieces
                                }) =
    let nextPieces = if color == White then wPieces else bPieces
        moves = map (getPieceMoves b) nextPieces
-       newPieces = map (\ (bPiece, Right (_, caps, movs)) ->
+       newPieces = map (\ (bPiece, Right pieceMoves) ->
+                              setPieceMoves bPiece $ pieceMovesTo2 pieceMoves)
+                       $ zip nextPieces moves
+       {-newPieces = map (\ (bPiece, Right (_, caps, movs)) ->
                            let piece = getPiece bPiece
                                color = getColor bPiece
                                pos   = getPosition bPiece
                                haveMoved = getHaveMoved bPiece
                                moves = Just (caps, movs)
                            in mkPiece color piece pos haveMoved moves)
-                       $ zip newPieces moves
+                       $ zip newPieces moves-}
 
        (newPiecesW, newPiecesB) =
          if color == White
          then (newPieces, bPieces)
-         else (wPieces, bPieces)
+         else (wPieces, newPieces)
 
    in mkBoard newPiecesW newPiecesB lastMove color
 
 
---END addPieceToBoard and setPieceMoves (piece stores pieceMoves)
+--END addPieceToBoard and getPieceMovesForBoard (piece stores pieceMoves)
 
 
 ---START movePiece (also movePiece', promotePawn, castlePlz)

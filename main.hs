@@ -25,14 +25,15 @@ getPlayerMove = do
    putStrLn ""
    return line
 
-gameLoop board whosTurn botDepth = do
+gameLoop board botDepth = do
    moveStr <- getPlayerMove
 
    let move = extractRight . strToMove $ moveStr
-       newBoard' = step board Nothing whosTurn move
+       newBoard' = step board Nothing move >>= processAfterStep
 
    if isRight newBoard'
    then let newBoard = extractRight newBoard'
+            whosTurn = getNextPlayer board
             nextTurn = flipColor whosTurn
         in do putStrLn "board after move:"
               print $ displayBoardByColor newBoard whosTurn
@@ -42,11 +43,11 @@ gameLoop board whosTurn botDepth = do
               randomGen <- newStdGen
               (randomNum, newGen) <- return $ random randomGen
 
-              let aiMove = getAiMove newBoard nextTurn botDepth (Just randomNum)
+              let aiMove = getAiMove newBoard botDepth (Just randomNum)
 
               aiEval <- putStrLn $ (show aiMove) ++ ": chosen computer move"
 
-              gameLoop newBoard nextTurn botDepth
+              gameLoop newBoard botDepth
    else let (Left moveError) = newBoard'
         in --do print moveError
            case moveError of
@@ -58,20 +59,20 @@ gameLoop board whosTurn botDepth = do
                      return ()
                IsInvalidMove s ->
                   do putStrLn $ "Invalid move! (" ++ s ++ ")"
-                     gameLoop board whosTurn botDepth
+                     gameLoop board botDepth
                IsPieceNotFound s ->
                   do putStrLn $ "Cannot find starting piece: " ++ s
-                     gameLoop board whosTurn botDepth
+                     gameLoop board botDepth
                IsOtherFailure s ->
                   do putStrLn $ "Unknown error occured: " ++ s
-                     gameLoop board whosTurn botDepth
+                     gameLoop board botDepth
 
 
 gameDriver botDepth = do
    board <- return newGame
    print $ boardToMatrix board
 
-   game <- gameLoop board White botDepth
+   game <- gameLoop board botDepth
 
    return ()
 
@@ -79,23 +80,24 @@ gameDriver botDepth = do
 
 --START BOT GAME
 
-getPlayerMoveBot board whosTurn botDepth = do
+getPlayerMoveBot board botDepth = do
    randomGen <- newStdGen
    (randomNum, newGen) <- return $ random randomGen
 
-   return . fst . extractJust $ getAiMove board whosTurn botDepth (Just randomNum)
+   return . fst . extractJust $ getAiMove board botDepth (Just randomNum)
 
-gameLoopBot _ _ 0 _ = do return ()
-gameLoopBot board whosTurn n botDepth = do
-   move <- getPlayerMoveBot board whosTurn botDepth
+gameLoopBot _ 0 _ = do return ()
+gameLoopBot board n botDepth = do
+   let whosTurn = getNextPlayer board
 
-   let newBoard' = step board Nothing whosTurn move
+   move <- getPlayerMoveBot board botDepth
+
+   let newBoard' = step board Nothing move >>= processAfterStep
 
    if isRight newBoard'
    then let newBoard = extractRight newBoard'
-            nextTurn = flipColor whosTurn
         in do putStrLn $ moveToStr move
-              gameLoopBot newBoard nextTurn (n-1) botDepth
+              gameLoopBot newBoard (n-1) botDepth
    else let (Left moveError) = newBoard'
         in --do print moveError
            case moveError of
@@ -121,7 +123,7 @@ gameDriverBot botDepth = do
    putStrLn "new"
 
    board <- return newGame
-   game <- gameLoopBot board White 100 botDepth
+   game <- gameLoopBot board 100 botDepth
    return ()
 
 --END BOT GAME
@@ -135,17 +137,17 @@ xboardMoveToMove moveStr =
        move = strToMove moveStr3
    in move
 
-pVeCheck board currColor botColor move botDepth = do
-   let newBoard' = step board Nothing currColor move
+pVeCheck board botColor move botDepth = do
+   let newBoard' = step board Nothing move >>= processAfterStep
 
    if isRight newBoard'
    then let newBoard = extractRight newBoard'
-            nextTurn = flipColor currColor
+            nextTurn = getNextPlayer newBoard
         in do
-            if currColor == botColor
+            if nextTurn == botColor
             then putStrLn $ "move " ++ (moveToStr move)
             else return ()
-            pVeHelper newBoard nextTurn botColor Nothing botDepth
+            pVeHelper newBoard botColor Nothing botDepth
    else let (Left moveError) = newBoard'
         in --do print moveError
            case moveError of
@@ -166,28 +168,31 @@ pVeCheck board currColor botColor move botDepth = do
                      return () --gameLoopBot board whosTurn
 
 
-pVeHelper board currColor botColor maybeMove botDepth = do
+pVeHelper board botColor maybeMove botDepth = do
+   let currColor = getNextPlayer board
 
    if isJust maybeMove
    then let move = extractRight $ xboardMoveToMove (extractJust maybeMove)
-        in pVeCheck board White Black move botDepth
+        in pVeCheck board Black move botDepth
    else return ()
 
    if currColor == botColor && (not $ isJust maybeMove)
-   then do move <- getPlayerMoveBot board currColor botDepth
+   then do move <- getPlayerMoveBot board botDepth
            putStrLn "#bot move"
-           pVeCheck board currColor botColor move botDepth
+           pVeCheck board botColor move botDepth
    else do line <- getLine
            putStrLn $ "#got: " ++ line
 
            if substring "usermove" line && (not $ substring "accepted" line)
            then let opponentMove = extractRight $ xboardMoveToMove line
-                in pVeCheck board currColor botColor opponentMove botDepth
-           else pVeHelper board currColor botColor Nothing botDepth
+                in pVeCheck board botColor opponentMove botDepth
+           else pVeHelper board botColor Nothing botDepth
 
-personVsEngineLoop board color botColor hasStarted botDepth = do
+personVsEngineLoop board botColor hasStarted botDepth = do
    line <- getLine
    putStrLn $ "#got: " ++ line
+
+   let color = getNextPlayer board
 
    let newColor = if botColor == White then White else
                   if line == "white" then White else color
@@ -196,11 +201,11 @@ personVsEngineLoop board color botColor hasStarted botDepth = do
    then do putStrLn $ "#we have go! starting color: " ++ (show color)
                       ++ "\n#bot color:" ++ (show botColor)
            --personVsEngineLoop board color botColor True
-           pVeHelper board color newColor Nothing botDepth
+           pVeHelper board newColor Nothing botDepth
    else return ()
 
    if substring "usermove" line && (not $ substring "accepted" line)
-   then do pVeHelper board color Black (Just line) botDepth
+   then do pVeHelper board Black (Just line) botDepth
    else return ()
 
 
@@ -209,7 +214,7 @@ personVsEngineLoop board color botColor hasStarted botDepth = do
    --then pVeHelper board color botColor
    --else personVsEngineLoop board color botColor False
 
-   personVsEngineLoop board color newColor False botDepth
+   personVsEngineLoop board newColor False botDepth
 
 personVsEngineSetup botDepth = do
    line <- getLine
@@ -228,7 +233,7 @@ personVsEngineSetup botDepth = do
        haveProtoVer = substring "protover" line
 
    if haveProtoVer
-   then  personVsEngineLoop newGame White Black False botDepth
+   then  personVsEngineLoop newGame Black False botDepth
    else return ()
 
    {-if line == "go"

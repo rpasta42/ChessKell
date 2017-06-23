@@ -87,16 +87,17 @@ genBoardTree depth toPlay board
                           $ genPossibleMoveBoards board newColor
 
 
-getAiMove :: Board -> Color -> Int -> Maybe Int -> Maybe (Move, Int)
-getAiMove board color depth random' =
-   let isMaxi = color == White
+getAiMove :: Board -> Int -> Maybe Int -> Maybe (Move, Int)
+getAiMove board depth random' =
+   let color = getNextPlayer board
+       isMaxi = color == White
        testSign :: Ord a => a -> a -> Bool
        testSign = if isMaxi then (>) else (<)
 
        random = random' -- for random moves
        --random = Nothing --for non-random moves
 
-       allMoves = getPossibleMoves board color
+       allMoves = getPossibleMoves board color --TODO: remove this
 
        --no seq: 1m 46 secs
        --listParSeq2: 0m31 secs

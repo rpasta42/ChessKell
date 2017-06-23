@@ -1,6 +1,5 @@
 module ChessUtils
 ( displayBoardByColor, boardToMatrix
-, mkPiece, mkPieceNoMoves, mkBoard
 , getAllBoardPieces, getBoardPieceByPos, getBoardPieceByCoord
 , getBoardPieceByPiece
 , removePiece, removePieceByPos, removePieceByPos'
@@ -43,7 +42,6 @@ boardToMatrix :: Board -> M.Matrix String
 boardToMatrix b = displayBoardByColor b White
 
 
-
 newGameBoard =
    let board1 = newMatrix 10 10 " "
        board2 =
@@ -56,36 +54,6 @@ newGameBoard =
                              else e)
                    " "
    in board2
-
-
-mkPiece color piece pos moved moves =
-   BoardPiece { getColor = color
-              , getPiece = piece
-              , getPosition = pos
-              , getHaveMoved = moved
-              , getMoves = moves
-              }
-
-mkPieceW = mkPiece White
-mkPieceB = mkPiece Black
-
-mkPieceNoMoves color piece pos moved =
-   mkPiece color piece pos moved Nothing
-
-
-mkBoard whitePieces blackPieces lastMove nextToMove =
-   Board { getWhitePieces=whitePieces
-         , getBlackPieces=blackPieces
-         , getLastMove=lastMove
-         , getNextPlayer=nextToMove
-         }
-
-
-mkBoardFromPair lastMove nextPlayer
-                (wPieces, bPieces) =
-   mkBoard wPieces bPieces lastMove nextPlayer
-
-
 
 --getAllBoardPieces/getBoardPieceByPos/getBoardPieceByCoord/GetBoardPieceByPiece
 

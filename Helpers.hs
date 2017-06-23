@@ -1,5 +1,8 @@
 module Helpers
 ( posToCoord, coordToPos, moveToStr
+, mkBoard, mkBoardFromPair
+, mkPiece, mkPieceW, mkPieceB, mkPieceNoMoves
+, flipBoardColor, setPieceMoves
 , flipColor
 , coordEq
 , getPieceCoord
@@ -30,7 +33,58 @@ numToChr x = C.chr $ C.ord '0' + x
 moveToStr (Move ((x1, y1), (x2,y2))) =
    [C.toLower x1] ++ [numToChr y1] ++ [C.toLower x2] ++ [numToChr y2]
 
+
+---start make functions
+
+mkBoard whitePieces blackPieces lastMove nextToMove =
+   Board { getWhitePieces=whitePieces
+         , getBlackPieces=blackPieces
+         , getLastMove=lastMove
+         , getNextPlayer=nextToMove
+         }
+
+mkBoardFromPair lastMove nextPlayer
+                (wPieces, bPieces) =
+   mkBoard wPieces bPieces lastMove nextPlayer
+
+
+
+mkPiece color piece pos moved moves =
+   BoardPiece { getColor = color
+              , getPiece = piece
+              , getPosition = pos
+              , getHaveMoved = moved
+              , getMoves = moves
+              }
+
+mkPieceW = mkPiece White
+mkPieceB = mkPiece Black
+
+mkPieceNoMoves color piece pos moved =
+   mkPiece color piece pos moved Nothing
+
+--end make functions
+
+
 --small funcs
+
+
+setPieceMoves :: BoardPiece -> PieceMoves2 -> BoardPiece
+setPieceMoves (BoardPiece { getPiece = piece
+                          , getColor = color
+                          , getPosition = pos
+                          , getHaveMoved = haveMoved
+                          })
+              moves =
+   mkPiece color piece pos haveMoved $ Just moves
+
+flipBoardColor :: Board -> Board
+flipBoardColor (Board { getWhitePieces = wPieces
+                      , getBlackPieces = bPieces
+                      , getNextPlayer = color
+                      , getLastMove = lastMove
+                      }) =
+   mkBoard wPieces bPieces lastMove (flipColor color)
 
 flipColor :: Color -> Color
 flipColor White = Black

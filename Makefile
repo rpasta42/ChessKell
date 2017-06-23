@@ -1,7 +1,8 @@
 
 
+botDepth=5
 buildFlags=+RTS -N3 -s -RTS -rtsopts
-runflags=+RTS -N3
+runflags=-d $(botDepth) +RTS -N3
 guiData=-mode MachineBlack
 #guiData=-mode MachineWhite
 

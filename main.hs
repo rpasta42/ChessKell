@@ -15,7 +15,7 @@ import Debug.Trace
 
 
 --step newGame Nothing White (extractRight $ strToMove "a2,a4") Nothing
-botDepth = 4
+defaultScanDepth = 4
 
 --START NORMAL COMMAND LINE GAME
 
@@ -25,7 +25,7 @@ getPlayerMove = do
    putStrLn ""
    return line
 
-gameLoop board whosTurn = do
+gameLoop board whosTurn botDepth = do
    moveStr <- getPlayerMove
 
    let move = extractRight . strToMove $ moveStr
@@ -46,7 +46,7 @@ gameLoop board whosTurn = do
 
               aiEval <- putStrLn $ (show aiMove) ++ ": chosen computer move"
 
-              gameLoop newBoard nextTurn
+              gameLoop newBoard nextTurn botDepth
    else let (Left moveError) = newBoard'
         in --do print moveError
            case moveError of
@@ -58,20 +58,20 @@ gameLoop board whosTurn = do
                      return ()
                IsInvalidMove s ->
                   do putStrLn $ "Invalid move! (" ++ s ++ ")"
-                     gameLoop board whosTurn
+                     gameLoop board whosTurn botDepth
                IsPieceNotFound s ->
                   do putStrLn $ "Cannot find starting piece: " ++ s
-                     gameLoop board whosTurn
+                     gameLoop board whosTurn botDepth
                IsOtherFailure s ->
                   do putStrLn $ "Unknown error occured: " ++ s
-                     gameLoop board whosTurn
+                     gameLoop board whosTurn botDepth
 
 
-gameDriver = do
+gameDriver botDepth = do
    board <- return newGame
    print $ boardToMatrix board
 
-   game <- gameLoop board White
+   game <- gameLoop board White botDepth
 
    return ()
 
@@ -79,15 +79,15 @@ gameDriver = do
 
 --START BOT GAME
 
-getPlayerMoveBot board whosTurn = do
+getPlayerMoveBot board whosTurn botDepth = do
    randomGen <- newStdGen
    (randomNum, newGen) <- return $ random randomGen
 
    return . fst . extractJust $ getAiMove board whosTurn botDepth (Just randomNum)
 
-gameLoopBot _ _ 0 = do return ()
-gameLoopBot board whosTurn n = do
-   move <- getPlayerMoveBot board whosTurn
+gameLoopBot _ _ 0 _ = do return ()
+gameLoopBot board whosTurn n botDepth = do
+   move <- getPlayerMoveBot board whosTurn botDepth
 
    let newBoard' = step board Nothing whosTurn move
 
@@ -95,7 +95,7 @@ gameLoopBot board whosTurn n = do
    then let newBoard = extractRight newBoard'
             nextTurn = flipColor whosTurn
         in do putStrLn $ moveToStr move
-              gameLoopBot newBoard nextTurn (n-1)
+              gameLoopBot newBoard nextTurn (n-1) botDepth
    else let (Left moveError) = newBoard'
         in --do print moveError
            case moveError of
@@ -115,17 +115,16 @@ gameLoopBot board whosTurn n = do
                   do putStrLn $ "Unknown error occured: " ++ s
                      return () --gameLoopBot board whosTurn
 
-gameDriverBot = do
+gameDriverBot botDepth = do
    putStrLn "usermove=1"
    putStrLn "go"
    putStrLn "new"
 
    board <- return newGame
-   game <- gameLoopBot board White 100
+   game <- gameLoopBot board White 100 botDepth
    return ()
 
 --END BOT GAME
-
 
 --START PLAYER VS ENGINE
 
@@ -136,7 +135,7 @@ xboardMoveToMove moveStr =
        move = strToMove moveStr3
    in move
 
-pVeCheck board currColor botColor move = do
+pVeCheck board currColor botColor move botDepth = do
    let newBoard' = step board Nothing currColor move
 
    if isRight newBoard'
@@ -146,7 +145,7 @@ pVeCheck board currColor botColor move = do
             if currColor == botColor
             then putStrLn $ "move " ++ (moveToStr move)
             else return ()
-            pVeHelper newBoard nextTurn botColor Nothing
+            pVeHelper newBoard nextTurn botColor Nothing botDepth
    else let (Left moveError) = newBoard'
         in --do print moveError
            case moveError of
@@ -167,26 +166,26 @@ pVeCheck board currColor botColor move = do
                      return () --gameLoopBot board whosTurn
 
 
-pVeHelper board currColor botColor maybeMove = do
+pVeHelper board currColor botColor maybeMove botDepth = do
 
    if isJust maybeMove
    then let move = extractRight $ xboardMoveToMove (extractJust maybeMove)
-        in pVeCheck board White Black move
+        in pVeCheck board White Black move botDepth
    else return ()
 
    if currColor == botColor && (not $ isJust maybeMove)
-   then do move <- getPlayerMoveBot board currColor
+   then do move <- getPlayerMoveBot board currColor botDepth
            putStrLn "#bot move"
-           pVeCheck board currColor botColor move
+           pVeCheck board currColor botColor move botDepth
    else do line <- getLine
            putStrLn $ "#got: " ++ line
 
            if substring "usermove" line && (not $ substring "accepted" line)
            then let opponentMove = extractRight $ xboardMoveToMove line
-                in pVeCheck board currColor botColor opponentMove
-           else pVeHelper board currColor botColor Nothing
+                in pVeCheck board currColor botColor opponentMove botDepth
+           else pVeHelper board currColor botColor Nothing botDepth
 
-personVsEngineLoop board color botColor hasStarted = do
+personVsEngineLoop board color botColor hasStarted botDepth = do
    line <- getLine
    putStrLn $ "#got: " ++ line
 
@@ -197,11 +196,11 @@ personVsEngineLoop board color botColor hasStarted = do
    then do putStrLn $ "#we have go! starting color: " ++ (show color)
                       ++ "\n#bot color:" ++ (show botColor)
            --personVsEngineLoop board color botColor True
-           pVeHelper board color newColor Nothing
+           pVeHelper board color newColor Nothing botDepth
    else return ()
 
    if substring "usermove" line && (not $ substring "accepted" line)
-   then do pVeHelper board color Black (Just line)
+   then do pVeHelper board color Black (Just line) botDepth
    else return ()
 
 
@@ -210,9 +209,9 @@ personVsEngineLoop board color botColor hasStarted = do
    --then pVeHelper board color botColor
    --else personVsEngineLoop board color botColor False
 
-   personVsEngineLoop board color newColor False
+   personVsEngineLoop board color newColor False botDepth
 
-personVsEngineSetup = do
+personVsEngineSetup botDepth = do
    line <- getLine
    putStrLn $ "#got: " ++ line
 
@@ -229,7 +228,7 @@ personVsEngineSetup = do
        haveProtoVer = substring "protover" line
 
    if haveProtoVer
-   then  personVsEngineLoop newGame White Black False
+   then  personVsEngineLoop newGame White Black False botDepth
    else return ()
 
    {-if line == "go"
@@ -243,7 +242,7 @@ personVsEngineSetup = do
 
    if line == "quit" -- || substring "result" line
    then return ()
-   else personVsEngineSetup
+   else personVsEngineSetup botDepth
 
 --END PLAYER VS ENGINE
 
@@ -311,22 +310,36 @@ test2 =
 
 ---START cmd args
 
-data GameMode = HumanVsHuman | EngineVsEngine | HumanVsEngine
-data CmdArgs = Usage String | ScanDepth Int
-             | HumanVsHuman | EngineVsEngine | HumanVsEngine
+data CmdArgs = HumanVsHuman | EngineVsEngine | HumanVsEngine
+             | Usage String | ScanDepth Int deriving (Show)
 
+getScanDepthArg :: [CmdArgs] -> Maybe Int
+getScanDepthArg (ScanDepth x : xs) = Just x
+getScanDepthArg (_:xs) = getScanDepthArg xs
+getScanDepthArg [] = Nothing
 
-tac = unlines . reverse . lines
+getGameModeArg :: [CmdArgs] -> Maybe CmdArgs
+getGameModeArg (HumanVsHuman : xs) = Just HumanVsHuman
+getGameModeArg (EngineVsEngine :xs) = Just EngineVsEngine
+getGameModeArg (HumanVsEngine :xs) = Just HumanVsEngine
+getGameModeArg (_:xs) = getGameModeArg xs
+getGameModeArg [] = Nothing
+
 
 usage = "[hve|hvh|eve] -d [depth] - \n"
          ++ "hve = human vs engine\n"
          ++ "hvh = human vs human\n"
          ++ "eve = engine vs engine"
 
-parse ["-h"] = Usage usage
-parse ["-d", x] =
+parse ("-h":xs)   = Usage usage : parse xs
+parse ("-d":x:xs) = (ScanDepth $ strToInt x) : parse xs
+parse ("hvh":xs)  = HumanVsHuman : parse xs
+parse ("hve":xs)  = HumanVsEngine : parse xs
+parse ("eve":xs)  = EngineVsEngine : parse xs
+parse _ = []
 
 ---END cmd args
+
 
 ---START main setup stuff
 
@@ -342,15 +355,28 @@ setBufferingGui =
 main = do
    args <- getArgs
 
-   if length args == 1
-   then case (head args) of
-         "hve" -> do setBufferingGui
-                     personVsEngineSetup
-         "hvh" -> do setBufferingCmd
-                     gameDriver
-         "eve" -> do setBufferingCmd
-                     gameDriverBot
-   else putStrLn $ "incorrect arguments" ++ (show . length $ args)
+   let parsedArgs = parse args
+       gameModeMaybe = getGameModeArg parsedArgs
+       scanDepthMaybe = getScanDepthArg parsedArgs
+       scanDepth = tryExtractJust scanDepthMaybe defaultScanDepth
+
+   if not $ isJust scanDepthMaybe
+   then putStrLn $ "setting default scan depth " ++ (show defaultScanDepth)
+   else putStrLn $ "using scan depth " ++ (show scanDepth)
+
+   if not $ isJust gameModeMaybe
+   then putStrLn $ "incorrect arguments: \n" ++ usage
+   else let gameMode = extractJust gameModeMaybe
+        in case gameMode of
+            HumanVsEngine ->
+               do setBufferingGui
+                  personVsEngineSetup scanDepth
+            HumanVsHuman ->
+               do setBufferingCmd
+                  gameDriver scanDepth
+            EngineVsEngine ->
+               do setBufferingCmd
+                  gameDriverBot scanDepth
 
 ---END main setup stuff
 

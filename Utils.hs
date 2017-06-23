@@ -2,7 +2,7 @@ module Utils
 ( deleteLstIndex, deleteLstItem
 , replaceLstIndex
 , newMatrix
-, extractJust, isJust
+, extractJust, isJust, tryExtractJust
 , extractRight, isRight
 , listSingletonExtract
 , listFilterLeft
@@ -14,6 +14,7 @@ module Utils
 , listParSeq2, listParSeq3, listParSeq4
 , showListLines
 , substring
+, strToInt
 ) where
 
 import qualified Data.Matrix as M
@@ -73,13 +74,18 @@ replaceLstIndex lst i newItem =
 
 --notFunc x =
 
---extractJust/isJust/extractRight/isRight
+--extractJust/isJust/tryExtractJust/extractRight/isRight
 extractJust :: Maybe a -> a
 extractJust (Just y) = y
 
 isJust :: Maybe a -> Bool
 isJust (Just _) = True
 isJust Nothing = False
+
+tryExtractJust :: Maybe a -> a -> a
+tryExtractJust Nothing b = b
+tryExtractJust (Just a) _ = a
+
 
 extractRight :: Either a b -> b
 extractRight (Right x) = x
@@ -188,9 +194,9 @@ prefix (x:xs) (y:ys) = (x == y) && prefix xs ys
 
 strToInt :: String -> Int
 strToInt s =
-   foldl (\acc (depth, n) -> acc + depth*n)
+   foldl (\acc (depth, n) -> (10 ^ depth) * n + acc)
          0
-         . zip [1,10..] $ reverse . map C.digitToInt $ s
+         . zip [0..] $ reverse . map C.digitToInt $ s
 
 
 

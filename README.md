@@ -38,3 +38,17 @@ Performance is decent with the default scan depth of 4, but starts getting slow 
 - [ ] change Board structure to include list of possible moves so the work isn't duplicated and adding heuristics is simpler
 - [ ] parse command line arguments so the engine doesn't need to be recompiled when switching game modes
 
+- Next steps
+   - re-write step to use algebraic data-types
+   - re-write chesskell around strong equation laws to guarantee invariants about behavior under composition
+   - possible make the board store the winner information
+   - remove redundant move generation in Ai and Logic
+   - Unit tests
+   - fix AI check bug
+      - prune AI tree for moves that can cause checkmate
+
+
+#### Notes
+- [useful guide for connecting xboard to a custom chess engine](https://www.gnu.org/software/xboard/engine-intf.html)
+
+

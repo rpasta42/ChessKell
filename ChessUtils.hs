@@ -3,9 +3,9 @@ module ChessUtils
 , mkPiece, mkPieceNoMoves, mkBoard
 , getAllBoardPieces, getBoardPieceByPos, getBoardPieceByCoord
 , getBoardPieceByPiece
-, removePiece, removePieceByPos
-, pieceMovesToMoves
+, removePiece, removePieceByPos, removePieceByPos'
 , removePieceAtPos, isIllegalMove
+, pieceMovesToMoves
 ) where
 
 --imports
@@ -136,6 +136,7 @@ removePieceByPos board pos =
    let piece = getBoardPieceByPos board pos
    in piece >>= removePiece board
 
+removePieceByPos' = flip removePieceByPos
 
 
 ---START stuff needed by movePiece

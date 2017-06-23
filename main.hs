@@ -1,5 +1,3 @@
---cabal install matrix
---cabal install either
 
 import Types
 import Utils
@@ -7,17 +5,16 @@ import ChessUtils
 import Helpers
 import Logic
 import Ai
-import qualified Data.List as L
+import Step
 import qualified Data.Char as C
 import System.Environment
 import System.Random
-import System.IO
+import System.IO (hSetBuffering, stdout, stdin, BufferMode(NoBuffering, LineBuffering))
 import System.Posix.Unistd (sleep)
-import Data.Either.Combinators (mapLeft)
 import Debug.Trace
 
---step newGame Nothing White (extractRight $ strToMove "a2,a4") Nothing
 
+--step newGame Nothing White (extractRight $ strToMove "a2,a4") Nothing
 botDepth = 4
 
 --START NORMAL COMMAND LINE GAME
@@ -129,8 +126,6 @@ gameDriverBot = do
 
 --END BOT GAME
 
-
---https://www.gnu.org/software/xboard/engine-intf.html#13
 
 --START PLAYER VS ENGINE
 
@@ -250,80 +245,8 @@ personVsEngineSetup = do
    then return ()
    else personVsEngineSetup
 
-
 --END PLAYER VS ENGINE
 
-
---"a1,b2"
-strToMove :: String -> ChessRet Move
-strToMove s =
-   let splitted@(part1, part2) = splitAt 2 s
-       (fromStr, toStr) = (part1, tail part2)
-   in Right $ Move (strToPos fromStr, strToPos toStr)
-      where
-         strToPos s =
-            let (x, y) = splitAt 1 s
-                pos = (C.toUpper $ head x, C.digitToInt $ head y)
-            in pos
-
-
---IsCheckMate has winner color
-data StepFailure = IsStaleMate | IsCheckMate Color | IsInvalidMove String
-                 | IsPieceNotFound String | IsOtherFailure String
-                 | NeedPawnPromotion
-                     deriving (Show)
-
---current player color = p1, other player = p2
---current board: currMove, board after move: nextMove
-step :: Board -> Maybe Piece -> Color -> Move -> Either StepFailure Board
-step board pawnPromo color (Move (from, to)) =
-   do let nextColor = flipColor color
-          toCoord = posToCoord to
-
-      piece <- mapLeft (\errStr -> IsPieceNotFound $ "empty square selected: " ++ errStr)
-                       (getBoardPieceByPos board from)
-
-      let pColor' = getColor piece
-      pColor <- if pColor' /= color
-                then Left $ IsInvalidMove "wrong color piece"
-                else Right pColor'
-
-      pieceMoves1 <- mapLeft (\errStr -> IsOtherFailure $ "getPieceMoves failed: " ++ errStr)
-                             $ getPieceMoves board piece
-
-      let pieceMoves = L.concat . pairToList . (\(a, b, c) -> (b,c)) $ pieceMoves1
-
-      newBoard <- mapLeft (\errStr -> IsOtherFailure $ "movePiece failed: " ++ errStr)
-                          $ movePiece' board to pieceMoves1 piece
-
-      --move next to up?
-      checkCurrMoveP1 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckPrevMove failed: " ++ errStr)
-                                 (isUnderCheck color board)
-
-      checkCurrMoveP2 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckOtherColor1 failed: " ++ errStr)
-                                 $ isUnderCheck color board
-
-      checkNextMoveP1 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckNextMove failed: " ++ errStr)
-                                 $ isUnderCheck color newBoard
-
-      checkNextMoveP2 <- mapLeft (\errStr -> IsOtherFailure $ "isUnderCheckOtherColor2 failed: " ++ errStr)
-                                 $ isUnderCheck nextColor newBoard
-
-      let  (maybeWinner, isStaleMate) = getMatesAndStales newBoard nextColor
-
-      case (maybeWinner, isStaleMate, checkNextMoveP1, checkCurrMoveP1) of
-            (Just c, _, _, _)    -> Left $ IsCheckMate c
-            (_, True, _, _)      -> Left IsStaleMate
-            (_, _, True, False)  -> Left $ IsInvalidMove "cannot put yourself under check!"
-            (_, _, True, True)   -> Left $ IsInvalidMove "move away from check!"
-            _ -> Right newBoard
-
-
---misc Utils/tools:
-
-removePieceByPos' = flip removePieceByPos
-elem' :: (Eq a, Foldable t) => t a -> a -> Bool
-elem' = flip L.elem
 
 
 ---Tests
@@ -385,21 +308,50 @@ test2 =
 -}
 
 
+
+---START cmd args
+
+data GameMode = HumanVsHuman | EngineVsEngine | HumanVsEngine
+data CmdArgs = Usage String | ScanDepth Int
+             | HumanVsHuman | EngineVsEngine | HumanVsEngine
+
+
+tac = unlines . reverse . lines
+
+usage = "[hve|hvh|eve] -d [depth] - \n"
+         ++ "hve = human vs engine\n"
+         ++ "hvh = human vs human\n"
+         ++ "eve = engine vs engine"
+
+parse ["-h"] = Usage usage
+parse ["-d", x] =
+
+---END cmd args
+
+---START main setup stuff
+
+setBufferingCmd = do
+   hSetBuffering stdout NoBuffering
+   hSetBuffering stdin NoBuffering
+
+setBufferingGui =
+   hSetBuffering stdin LineBuffering
+
+
 --main = test2
 main = do
    args <- getArgs
 
    if length args == 1
    then case (head args) of
-         "hve" -> do System.IO.hSetBuffering System.IO.stdout System.IO.NoBuffering
-                     System.IO.hSetBuffering System.IO.stdin System.IO.NoBuffering
+         "hve" -> do setBufferingGui
                      personVsEngineSetup
-         "hvh" -> do System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering
+         "hvh" -> do setBufferingCmd
                      gameDriver
-         "eve" -> do System.IO.hSetBuffering System.IO.stdin System.IO.LineBuffering
+         "eve" -> do setBufferingCmd
                      gameDriverBot
    else putStrLn $ "incorrect arguments" ++ (show . length $ args)
 
-
+---END main setup stuff
 
 

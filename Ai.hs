@@ -177,4 +177,3 @@ getAiMove board color depth random' =
 
 
 
-

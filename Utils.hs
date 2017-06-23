@@ -19,6 +19,7 @@ module Utils
 import qualified Data.Matrix as M
 import qualified Data.List as L
 import qualified Control.Parallel as P
+import qualified Data.Char as C
 
 import Types
 
@@ -184,5 +185,12 @@ prefix :: String -> String -> Bool
 prefix [] ys = True
 prefix (x:xs) [] = False
 prefix (x:xs) (y:ys) = (x == y) && prefix xs ys
+
+strToInt :: String -> Int
+strToInt s =
+   foldl (\acc (depth, n) -> acc + depth*n)
+         0
+         . zip [1,10..] $ reverse . map C.digitToInt $ s
+
 
 

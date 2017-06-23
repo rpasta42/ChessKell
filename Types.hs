@@ -7,6 +7,7 @@ module Types
 , Coord
 , BoardPiece(..)
 , Board(..)
+, StepFailure(..)
 , PieceMoves, PieceMoves2
 , Move(..)
 ) where
@@ -99,6 +100,13 @@ data Board = Board { getWhitePieces :: [BoardPiece]
                    , getLastMove :: Maybe Move
                    , getNextPlayer :: Color
                    } deriving (Show)
+
+
+--IsCheckMate has winner color
+data StepFailure = IsStaleMate | IsCheckMate Color | IsInvalidMove String
+                 | IsPieceNotFound String | IsOtherFailure String
+                 | NeedPawnPromotion
+                     deriving (Show)
 
 
 type PieceMoves = (BoardPiece, [Coord], [Coord])

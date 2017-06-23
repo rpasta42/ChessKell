@@ -350,7 +350,6 @@ getPieceMoves' b bPiece =
 ---END getPossibleMoves, getPieceCaptures, getPieceMoves, getCastleMoves, getPieceMoves'
 
 
-
 ---START getMoveBoards' genPossibleMoveBoards2 genPossibleMoveBoards
 
 --for genPossibleMoveBoards and getMatesAndStales
@@ -480,7 +479,6 @@ getPieceMovesForBoard b@(Board { getWhitePieces = wPieces
 --END addPieceToBoard and setPieceMoves (piece stores pieceMoves)
 
 
-
 ---START movePiece (also movePiece', promotePawn, castlePlz)
 
 movePiece' :: Board -> Position -> PieceMoves
@@ -557,26 +555,5 @@ movePiece board@(Board {getLastMove=lastMove, getNextPlayer=nextPlayer})
                      ++ " or both in black/white"
 
 ---END movePiece (also promotePawn, castlePlz)
-
-
-
-{-old stuff
-moveOnOwnPiece :: Board -> BoardPiece -> Coord -> Bool
-moveOnOwnPiece board fromPiece to =
-   let pColor = getColor fromPiece
-       destPieceEither = getBoardPieceByCoord board to
-   in if isRight destPieceEither
-      then let destPiece = extractRight destPieceEither
-               destPieceColor = getColor destPiece
-           in destPieceColor == pColor
-      else False
-
-putUnderCheck board to = True
-
--}
-
---misc Utils/tools:
-
-removePieceByPos' = flip removePieceByPos
 
 

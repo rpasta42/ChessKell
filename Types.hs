@@ -93,6 +93,7 @@ data BoardPiece = BoardPiece { getPiece :: Piece
                              , getPosition :: Position
                              , getHaveMoved :: Bool
                              , getMoves :: Maybe ([Coord], [Coord])
+                             --, getPossibleMoveBoards :: Maybe [Board]
                              } deriving (Show, Eq)
 
 data Board = Board { getWhitePieces :: [BoardPiece]

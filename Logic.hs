@@ -43,7 +43,7 @@ newGame =
        bPieces = bPawns ++ bOtherPieces ++ extraRook
 
        board = mkBoard wPieces bPieces Nothing White
-   in board
+   in getPieceMovesForBoard board
    --in extractRight $ (removePieceByPos' ('D', 2) board)
    --in extractRight $ (removePieceByPos' ('A', 2) board >>= removePieceByPos' ('B', 2))
 
@@ -116,6 +116,22 @@ getPossibleMoves' b bPieces@(x:xs) acc =
        pieceMoves2 = pieceMoves1 --(\ (caps, moves) -> (x, caps, moves)) <$> pieceMoves1
    in getPossibleMoves' b xs (pieceMoves2 : acc)
 
+
+--does not account for putting king under check
+getPieceMoves :: Board -> BoardPiece -> ChessRet PieceMoves --([Coord], [Coord])
+getPieceMoves board bPiece =
+   let pPiece = getPiece bPiece
+       pCoord = getPieceCoord bPiece
+       pieceMoves1 = map (filter isCoordOnBoard) $ getPieceMoves' board bPiece
+       pieceMoves2 = map (filter (not . coordEq pCoord)) pieceMoves1
+       pieceMoves3 = pieceMoves2 --map (filter (not . putUnderCheck board)) pieceMoves2
+       pieceMoves4 = pieceMoves3 --map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
+       pieceMoves5 = pieceMoves4 --map (filter (not . isIllegalJump board bPiece)) pieceMoves4
+   in do capsAndMoves@(captures, moves) <- getPieceCaptures board pieceMoves5 bPiece
+         return (bPiece, captures, moves) --capsAndMoves
+         --if length captures == 0 && length moves == 0
+         --then Left "no moves"
+         --else return capsAndMoves
 
 
 {-getPieceCaptures :: Board -> [[Coord]] -> BoardPiece -> ChessRet ([Coord], [Coord])
@@ -208,23 +224,6 @@ getPieceCaptures b moves bPiece@(BoardPiece {getColor=color})  = Right getMoves 
        in (allCapts, allMoves)
 
 
-
-
---does not account for putting king under check
-getPieceMoves :: Board -> BoardPiece -> ChessRet PieceMoves --([Coord], [Coord])
-getPieceMoves board bPiece =
-   let pPiece = getPiece bPiece
-       pCoord = getPieceCoord bPiece
-       pieceMoves1 = map (filter isCoordOnBoard) $ getPieceMoves' board bPiece
-       pieceMoves2 = map (filter (not . coordEq pCoord)) pieceMoves1
-       pieceMoves3 = pieceMoves2 --map (filter (not . putUnderCheck board)) pieceMoves2
-       pieceMoves4 = pieceMoves3 --map (filter (not . moveOnOwnPiece board bPiece)) pieceMoves3
-       pieceMoves5 = pieceMoves4 --map (filter (not . isIllegalJump board bPiece)) pieceMoves4
-   in do capsAndMoves@(captures, moves) <- getPieceCaptures board pieceMoves5 bPiece
-         return (bPiece, captures, moves) --capsAndMoves
-         --if length captures == 0 && length moves == 0
-         --then Left "no moves"
-         --else return capsAndMoves
 
 
 getCastleMoves :: Board -> BoardPiece -> [[Coord]]

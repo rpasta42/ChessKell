@@ -1,10 +1,13 @@
 
 
-botDepth=5
+botDepth=4
 buildFlags=+RTS -N3 -s -RTS -rtsopts
 runflags=-d $(botDepth) +RTS -N3
 guiData=-mode MachineBlack
 #guiData=-mode MachineWhite
+
+debugFileArg=-debugFile xboard.log
+#debugFileArg=-nameOfDebufFile xboard.log
 
 build: #clean
 	ghc main.hs -O3 $(buildFlags) -threaded
@@ -15,7 +18,7 @@ run: build
 
 #player vs bot xboard
 gui: build
-	xboard -fcp "./main hve $(runflags)" -debug -debugMode true -engineDebugOutput 2 -debugFile xboard.log $(guiData) #; cat xboard.log
+	xboard -fcp "./main hve $(runflags)" -debug -debugMode true -engineDebugOutput 2 $(debugFileArg) $(guiData) #; cat xboard.log
 
 
 #bot vs bot xboard

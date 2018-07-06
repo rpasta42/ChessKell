@@ -60,7 +60,7 @@ step board pawnPromo (Move (from, to)) =
 
 processAfterStep :: Board -> Either StepFailure Board
 processAfterStep board =
-   let newColorBoard = flipBoardColor board
+   let newColorBoard = board --let newColorBoard = flipBoardColor board
    in Right $ getPieceMovesForBoard newColorBoard
 
 

@@ -6,7 +6,7 @@ runflags=-d $(botDepth) +RTS -N3
 guiData=-mode MachineBlack
 #guiData=-mode MachineWhite
 
-debugFileArg=-debugFile xboard.log
+#debugFileArg=-debugFile xboard.log
 #debugFileArg=-nameOfDebufFile xboard.log
 
 build: #clean
